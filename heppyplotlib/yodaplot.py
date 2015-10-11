@@ -50,9 +50,8 @@ def plot_scatter2d(scatter, errors_enabled=True, visible=True, **kwargs):
         plt.errorbar(x, y, fmt='o', yerr=y_errs, xerr=x_errs, visible=visible, **kwargs)
     else:
         x_lefts = [current_x - current_x_err_left for current_x, current_x_err_left in zip(x, x_errs[0])]
-        x_lefts.append(x_lefts[-1] + x_errs[1][-1])
-        y.append(y[-1])
-        plt.step(x_lefts, y, where='post', visible=visible, **kwargs)
+        widths = [err_left + err_right for err_left, err_right in zip(x_errs[0], x_errs[1])]
+        plot_step_with_errorbar(x_lefts, x, widths, y, y_errs, errors_enabled, visible, **kwargs)
 
 def plot_histo1d(histo, errors_enabled=True, visible=True, **kwargs):
     x_lefts = [bin.xEdges[0] for bin in histo.bins]
@@ -67,13 +66,16 @@ def plot_histo1d(histo, errors_enabled=True, visible=True, **kwargs):
     if not bins_are_adjacent:
         plt.bar(x_lefts, y, width=widths, yerr=y_errs, visible=visible, **kwargs)
     else:
-        x_lefts.append(x_lefts[-1] + widths[-1])
-        y.append(y[-1])
-        plt.step(x_lefts, y, where='post', visible=visible, **kwargs)
-        if errors_enabled:
-            x_mids = [left + width / 2.0 for left, width in zip(x_lefts[:-1], widths)]
-            plt.gca().set_color_cycle(None)
-            plt.errorbar(x_mids, y[:-1], fmt='none', yerr=y_errs, visible=visible)
+        x_mids = [left + width / 2.0 for left, width in zip(x_lefts, widths)]
+        plot_step_with_errorbar(x_lefts, x_mids, widths, y, y_errs, errors_enabled, visible, **kwargs)
     # fix stupid automatic limits
     margins = (0, 0)  # (width[0]/4.0, width[-1]/4.0)
     plt.xlim(x_lefts[0] - margins[0], x_lefts[-1] + margins[1])
+
+def plot_step_with_errorbar(left, mid, width, y, y_errs, errors_enabled=True, visible=True, **kwargs):
+    left.append(left[-1] + width[-1])
+    y.append(y[-1])
+    plt.step(left, y, where='post', visible=visible, **kwargs)
+    if errors_enabled:
+        x_mids = [current_left + current_width / 2.0 for current_left, current_width in zip(left[:-1], width)]
+        plt.errorbar(mid, y[:-1], fmt='none', yerr=y_errs, visible=visible, ecolor=plt.gca().lines[-1].get_color())
