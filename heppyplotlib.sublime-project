@@ -1,0 +1,12 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+  "SublimeLinter":
+  {
+      "@python": 2,
+  }
+}
