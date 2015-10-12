@@ -4,24 +4,31 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-def gridplot(filename, uses_rivet_plot_info=True):
-    """Convenience function to plot all YODA data objects from a YODA file into a subplots grid."""
+def gridplot(file_name, uses_rivet_plot_info=True):
+    """Convenience function to plot all :py:mod:`yoda` data objects
+    from a :py:mod:`yoda` file into a subplots grid.
+
+    :param str file_name: The path to the :py:mod:`yoda` file.
+    :return: fig, axes_list
+    """
     from . import yodaplot
 
-    rivet_paths = yodaplot.data_object_names(filename)
+    rivet_paths = yodaplot.data_object_names(file_name)
 
     # setup axes
     if len(rivet_paths) == 1:
-        axes_list = plt.subplots()[1]
+        fig, axes_list = plt.subplots()
     else:
         ncols = 2
         nrows = (len(rivet_paths) - 1) / ncols + 1
-        axes_list = plt.subplots(nrows, ncols, squeeze=False)[1]
+        fig, axes_list = plt.subplots(nrows, ncols, squeeze=False)
 
     # plot into axes
     for rivet_path, axes in zip(rivet_paths, np.ravel(axes_list)):
         plt.sca(axes)
-        plot(filename, rivet_path, uses_rivet_plot_info=uses_rivet_plot_info)
+        plot(file_name, rivet_path, uses_rivet_plot_info=uses_rivet_plot_info)
+
+    return fig, axes_list
 
 def ratioplot(files, rivet_path, normalized=0, uses_rivet_plot_info=True):
     """Convenience function to plot a given data object
