@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from matplotlib.ticker import MaxNLocator
 
 def gridplot(file_name, uses_rivet_plot_info=True):
     """Convenience function to plot all :py:mod:`yoda` data objects
@@ -35,6 +36,9 @@ def ratioplot(files, rivet_path, normalized=0, uses_rivet_plot_info=True):
     from various files into a nominal pane and a diff pane"""
     from . import yodaplot
 
+    if isinstance(files, basestring):
+        files = [files]
+
     axes_list = ratioplots()[1]
     plt.sca(axes_list[0])
     for filename in files:
@@ -54,7 +58,6 @@ def ratioplot(files, rivet_path, normalized=0, uses_rivet_plot_info=True):
         normalized = files[normalized]
 
     divide_by = yodaplot.load_data_object(normalized, rivet_path)
-    print divide_by
     for filename in files:
         data_object = yodaplot.load_data_object(filename, rivet_path, divide_by=divide_by)
         yodaplot.plot_data_object(data_object, visible=True)
@@ -94,3 +97,4 @@ def layout_main_and_diff_axis(main, diff):
     plt.setp(main.get_xticklabels(), visible=False)
     main.set_xlabel('')
     diff.xaxis.tick_bottom()
+    diff.yaxis.set_major_locator(MaxNLocator(prune='upper'))

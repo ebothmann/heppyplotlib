@@ -1,6 +1,7 @@
 """Functions for plotting data objects within YODA files."""
 
 import matplotlib.pyplot as plt
+import numpy as np
 import yoda
 
 def plot(filename, data_object_name, errors_enabled=True, visible=True, **kwargs):
@@ -90,9 +91,29 @@ def plot_step_with_errorbar(lefts, widths, y_coords, y_errs,
     y_coords.append(y_coords[-1])
     plt.step(lefts, y_coords, where='post', **kwargs)
     if errors_enabled:
-        x_mids = [left + width / 2.0 for left, width in zip(lefts[:-1], widths)]
         ecolor = plt.gca().lines[-1].get_color()  # do not use the next color from the color cycle
-        plt.errorbar(x_mids, y_coords[:-1], fmt='none', yerr=y_errs, ecolor=ecolor)
+        zorder = plt.gca().lines[-1].get_zorder() - 1  # make sure it's drawn below
+        plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder)
+        # x_mids = [left + width / 2.0 for left, width in zip(lefts[:-1], widths)]
+        # plt.errorbar(x_mids, y_coords[:-1], fmt='none', yerr=y_errs, ecolor=ecolor)
+
+def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1):
+    """Draws the y errors as an envelope for a step plot."""
+    try:
+        if not len(y_errs) == len(lefts) - 1:
+            y_errs = zip(*y_errs)  # try transposing
+            if not len(y_errs) == len(lefts) - 1:
+                raise Exception("There are less y errors than points.")
+    except TypeError:
+        pass
+    lefts = np.ravel(zip(lefts[:-1], lefts[1:]))
+    try:
+        y_down = np.ravel([[y - y_err[0]] * 2 for y, y_err in zip(y_coords, y_errs)])
+        y_up = np.ravel([[y + y_err[1]] * 2 for y, y_err in zip(y_coords, y_errs)])
+    except TypeError:
+        y_down = np.ravel([[y - y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
+        y_up = np.ravel([[y + y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
+    plt.fill_between(lefts, y_up, y_down, color=color, alpha=0.3, zorder=zorder, linewidth=0)
 
 def data_object_names(filename):
     """Retrieves all data object names from a YODA file."""
