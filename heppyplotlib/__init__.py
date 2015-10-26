@@ -3,5 +3,6 @@ A package for plotting histogrammed data with special support for high energy ph
 """
 
 from .plot import *
+from .errorcalc import *
 
 __version__ = "0.1.dev"

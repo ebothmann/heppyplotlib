@@ -73,7 +73,7 @@ def ratioplot(files, rivet_path, divide_by=0, uses_rivet_plot_info=True, axes_li
 
     return axes_list
 
-def plot(filename, rivet_path, uses_rivet_plot_info=True, **kwargs):
+def plot(filename, rivet_path, uses_rivet_plot_info=True, errors_enabled=None, **kwargs):
     """Plot a YODA data object from a YODA file."""
     from . import yodaplot
     print "Plotting", rivet_path, "from", filename, "..."
@@ -83,6 +83,18 @@ def plot(filename, rivet_path, uses_rivet_plot_info=True, **kwargs):
     else:
         errors_enabled = True
     yodaplot.plot(filename, rivet_path, errors_enabled=errors_enabled, **kwargs)
+    if uses_rivet_plot_info:
+        rivetplot.apply_plot_info(rivet_path)
+
+def plot_data_object(data_object, rivet_path,
+                     uses_rivet_plot_info=True, errors_enabled=None, **kwargs):
+    """Plot a YODA data object."""
+    from . import yodaplot
+    if uses_rivet_plot_info:
+        from . import rivetplot
+    if uses_rivet_plot_info and errors_enabled is None:
+        errors_enabled = rivetplot.errors_enabled(rivet_path)
+    yodaplot.plot_data_object(data_object, errors_enabled=errors_enabled, **kwargs)
     if uses_rivet_plot_info:
         rivetplot.apply_plot_info(rivet_path)
 

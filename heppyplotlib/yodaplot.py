@@ -18,10 +18,17 @@ def plot_data_object(data_object, errors_enabled=True, visible=True, **kwargs):
             return
     raise Exception('Unknown type of YODA data object: ', data_object)
 
+def get_y_coords(yoda_data_object):
+    """Return y coordinates for a YODA data object of an unknown type."""
+    getter_functions = {yoda.Scatter2D: get_scatter2d_y_coords, yoda.Histo1D: get_histo1d_y_coords}
+    for classinfo, getter_function in getter_functions.items():
+        if isinstance(yoda_data_object, classinfo):
+            return getter_function(yoda_data_object)
+
 def plot_scatter2d(scatter, errors_enabled=True, visible=True, **kwargs):
     """Plots a YODA Scatter2D object."""
     x_coords = [point.x for point in scatter.points]
-    y_coords = [point.y for point in scatter.points]
+    y_coords = get_scatter2d_y_coords(scatter)
     if errors_enabled and visible:
         x_errs = []
         x_errs.append([point.xErrs[0] for point in scatter.points])
@@ -41,12 +48,16 @@ def plot_scatter2d(scatter, errors_enabled=True, visible=True, **kwargs):
         step_with_errorbar_using_points(x_coords, x_errs, y_coords, y_errs,
                                         errors_enabled=errors_enabled, visible=visible, **kwargs)
 
+def get_scatter2d_y_coords(scatter):
+    """Return y coordinates for a Scatter2D object."""
+    return [point.y for point in scatter.points]
+
 def plot_histo1d(histo, errors_enabled=True, visible=True, **kwargs):
     """Plots a YODA Histo1D object."""
     x_lefts = [histo_bin.xEdges[0] for histo_bin in histo.bins]
     widths = [histo_bin.xEdges[1] - histo_bin.xEdges[0] for histo_bin in histo.bins]
     bins_are_adjacent = are_bins_adjacent(x_lefts, widths)
-    y_coord = [histo_bin.height for histo_bin in histo.bins]
+    y_coord = get_histo1d_y_coords(histo)
     y_errs = [histo_bin.heightErr for histo_bin in histo.bins]
     if not bins_are_adjacent:
         plt.bar(x_lefts, y_coord, width=widths, yerr=y_errs, visible=visible, **kwargs)
@@ -56,6 +67,10 @@ def plot_histo1d(histo, errors_enabled=True, visible=True, **kwargs):
     # fix stupid automatic limits
     margins = (0, 0)  # (width[0]/4.0, width[-1]/4.0)
     plt.xlim(x_lefts[0] - margins[0], x_lefts[-1] + margins[1])
+
+def get_histo1d_y_coords(histo):
+    """Return y coordinates for a Histo1D object."""
+    return [histo_bin.height for histo_bin in histo.bins]
 
 def are_points_with_errors_adjacent(points, errs):
     """Returns whether a given set of points are adjacent when taking their errors into account."""
