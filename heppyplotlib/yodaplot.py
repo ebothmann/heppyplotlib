@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yoda
 
-def plot(filename, data_object_name, errors_enabled=True, visible=True, **kwargs):
+def plot(filename_or_data_object, data_object_name, errors_enabled=True, visible=True, **kwargs):
     """Plots a data object from a YODA file."""
-    data_object = load_data_object(filename, data_object_name)
+    data_object = resolve_data_object(filename_or_data_object, data_object_name)
     plot_data_object(data_object, errors_enabled, visible, **kwargs)
 
 def plot_data_object(data_object, errors_enabled=True, visible=True, **kwargs):
@@ -135,9 +135,35 @@ def data_object_names(filename):
     data_objects = yoda.readYODA(filename)
     return data_objects.keys()
 
-def load_data_object(filename, name, divide_by=None):
-    """Loads a data object from a YODA file."""
-    data_object = yoda.readYODA(filename)[name]
+def resolve_data_object(filename_or_data_object, name, divide_by=None):
+    """Take passed data object or loads a data object from a YODA file,
+    and return it after dividing by divide_by."""
+    if isinstance(filename_or_data_object, basestring):
+        data_object = yoda.readYODA(filename_or_data_object)[name]
+    else:
+        data_object = filename_or_data_object
     if divide_by is not None:
-        data_object = data_object.divideBy(divide_by)
+        if data_object.type == "Histo1D":
+            data_object = data_object.divideBy(divide_by)
+        elif data_object.type == "Scatter2D":
+            for point, denominator_point in zip(data_object.points, divide_by.points):
+                print point.y, point.yErrs
+                print denominator_point.y, denominator_point.yErrs
+                if point.y == 0.0 and denominator_point.y == 0.0:
+                    new_y = 1.0
+                else:
+                    new_y = point.y / denominator_point.y
+                if new_y == 1.0 and point.yErrs == denominator_point.yErrs:
+                    # assume this is the same data set, so use the same relative error
+                    if denominator_point.y == 0.0:
+                        new_y_errs = [0.0, 0.0]
+                    else:
+                        new_y_errs = [y_err / denominator_point.y for y_err in denominator_point.yErrs]
+                else:
+                    # assume that we divide through an independent data set, use error propagation
+                    rel_y_errs = [(y_err / point.y + den_y_err / denominator_point.y)
+                                  for y_err, den_y_err in zip(point.yErrs, denominator_point.yErrs)]
+                    new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
+                point.y = new_y
+                point.yErrs = new_y_errs
     return data_object

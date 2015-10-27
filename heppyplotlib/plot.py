@@ -31,21 +31,26 @@ def gridplot(file_name, uses_rivet_plot_info=True):
 
     return fig, axes_list
 
-def ratioplot(files, rivet_path, divide_by=0, uses_rivet_plot_info=True, axes_list=None, draws_legend=True):
-    """Convenience function to plot a given data object
-    from various files into a nominal pane and a diff pane"""
+def ratioplot(files_or_data_objects, rivet_path,
+              divide_by=0, uses_rivet_plot_info=True, axes_list=None, draws_legend=True):
+    """Convenience function to plot data objects (directly passed or taken from files)
+    into a nominal pane and a diff pane"""
+    import yoda
     from . import yodaplot
 
-    if isinstance(files, basestring):
-        files = [files]
+    if isinstance(files_or_data_objects, basestring):
+        files_or_data_objects = [files_or_data_objects]
 
     if axes_list is None:
         axes_list = ratioplots()[1]
 
     plt.sca(axes_list[0])
-    for filename in files:
-        label = filename.replace('_', r'\_')
-        plot(filename, rivet_path, uses_rivet_plot_info=False, label=label)
+    for filename_or_data_object in files_or_data_objects:
+        try:
+            label = filename_or_data_object.replace('_', r'\_')
+        except AttributeError:
+            label = filename_or_data_object.path.replace('_', r'\_')
+        plot(filename_or_data_object, rivet_path, uses_rivet_plot_info=False, label=label)
 
     if draws_legend:
         if uses_rivet_plot_info:
@@ -58,11 +63,12 @@ def ratioplot(files, rivet_path, divide_by=0, uses_rivet_plot_info=True, axes_li
     plt.sca(axes_list[1])
 
     if isinstance(divide_by, int):
-        divide_by = files[divide_by]
+        divide_by = files_or_data_objects[divide_by]
+    divide_by = yodaplot.resolve_data_object(divide_by, rivet_path)
 
-    divide_by = yodaplot.load_data_object(divide_by, rivet_path)
-    for filename in files:
-        data_object = yodaplot.load_data_object(filename, rivet_path, divide_by=divide_by)
+    for filename_or_data_object in files_or_data_objects:
+        data_object = yodaplot.resolve_data_object(filename_or_data_object, rivet_path,
+                                                   divide_by=divide_by)
         yodaplot.plot_data_object(data_object, visible=True)
 
     if uses_rivet_plot_info:

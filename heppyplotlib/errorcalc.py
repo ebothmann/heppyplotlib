@@ -13,7 +13,7 @@ def combine(files, rivet_path, error_calc):
     from . import yodaplot
     y_coord_list = []
     for file_name in files:
-        data_object = yodaplot.load_data_object(file_name, rivet_path)
+        data_object = yodaplot.resolve_data_object(file_name, rivet_path)
         y_coord_list.append(yodaplot.get_y_coords(data_object))
     errs = error_calc(y_coord_list)
     # make sure we are dealing with a scatter object to have the correct notion of errors
