@@ -128,12 +128,16 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1):
     except TypeError:
         y_down = np.ravel([[y - y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
         y_up = np.ravel([[y + y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
-    plt.fill_between(lefts, y_up, y_down, color=color, alpha=0.3, zorder=zorder, linewidth=0)
+    plt.fill_between(lefts, y_up, y_down,
+                     color=color,
+                     alpha=0.3,
+                     zorder=zorder, linewidth=0)
 
 def data_object_names(filename):
     """Retrieves all data object names from a YODA file."""
     data_objects = yoda.readYODA(filename)
-    return data_objects.keys()
+    return [key for key in data_objects.keys()
+            if not data_objects[key].type in ('Counter', 'Scatter1D')]
 
 def resolve_data_object(filename_or_data_object, name, divide_by=None):
     """Take passed data object or loads a data object from a YODA file,
@@ -143,27 +147,31 @@ def resolve_data_object(filename_or_data_object, name, divide_by=None):
     else:
         data_object = filename_or_data_object
     if divide_by is not None:
+        divided_data_object = data_object.clone()
+        divide_by = resolve_data_object(divide_by, name)
         if data_object.type == "Histo1D":
-            data_object = data_object.divideBy(divide_by)
+            divided_data_object = data_object.divideBy(divide_by)
         elif data_object.type == "Scatter2D":
-            for point, denominator_point in zip(data_object.points, divide_by.points):
-                print point.y, point.yErrs
-                print denominator_point.y, denominator_point.yErrs
-                if point.y == 0.0 and denominator_point.y == 0.0:
+            for point, denominator_point in zip(divided_data_object.points, divide_by.points):
+                if denominator_point.y == 0.0:
                     new_y = 1.0
+                    new_y_errs = [0.0, 0.0]
                 else:
                     new_y = point.y / denominator_point.y
-                if new_y == 1.0 and point.yErrs == denominator_point.yErrs:
-                    # assume this is the same data set, so use the same relative error
-                    if denominator_point.y == 0.0:
-                        new_y_errs = [0.0, 0.0]
-                    else:
-                        new_y_errs = [y_err / denominator_point.y for y_err in denominator_point.yErrs]
-                else:
-                    # assume that we divide through an independent data set, use error propagation
-                    rel_y_errs = [(y_err / point.y + den_y_err / denominator_point.y)
-                                  for y_err, den_y_err in zip(point.yErrs, denominator_point.yErrs)]
-                    new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
+                    new_y_errs = [y_err / denominator_point.y for y_err in point.yErrs]
+                # if new_y == 1.0 and point.yErrs == denominator_point.yErrs:
+                #     # assume this is the same data set, so use the same relative error
+                    # if denominator_point.y == 0.0:
+                    #     new_y_errs = [0.0, 0.0]
+                    # else:
+                    #     new_y_errs = [y_err / denominator_point.y for y_err in denominator_point.yErrs]
+                # else:
+                #     # assume that we divide through an independent data set, use error propagation
+                #     rel_y_errs = [(y_err / point.y + den_y_err / denominator_point.y)
+                #                   for y_err, den_y_err in zip(point.yErrs, denominator_point.yErrs)]
+                #     new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
                 point.y = new_y
                 point.yErrs = new_y_errs
-    return data_object
+        return divided_data_object
+    else:
+        return data_object

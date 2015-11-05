@@ -14,7 +14,7 @@ def gridplot(file_name, uses_rivet_plot_info=True):
     """
     from . import yodaplot
 
-    rivet_paths = yodaplot.data_object_names(file_name)
+    rivet_paths = rivet_paths(file_name)
 
     # setup axes
     if len(rivet_paths) == 1:
@@ -30,6 +30,10 @@ def gridplot(file_name, uses_rivet_plot_info=True):
         plot(file_name, rivet_path, uses_rivet_plot_info=uses_rivet_plot_info)
 
     return fig, axes_list
+
+def rivet_paths(file_name):
+    from . import yodaplot
+    return yodaplot.data_object_names(file_name)
 
 def ratioplot(files_or_data_objects, rivet_path,
               divide_by=0, uses_rivet_plot_info=True, axes_list=None, draws_legend=True):
@@ -64,7 +68,6 @@ def ratioplot(files_or_data_objects, rivet_path,
 
     if isinstance(divide_by, int):
         divide_by = files_or_data_objects[divide_by]
-    divide_by = yodaplot.resolve_data_object(divide_by, rivet_path)
 
     for filename_or_data_object in files_or_data_objects:
         data_object = yodaplot.resolve_data_object(filename_or_data_object, rivet_path,

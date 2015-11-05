@@ -82,13 +82,15 @@ def set_axis_limits(plot_info, upper, lower):
 def set_tick_locators(plot_info, upper, lower):
     """Sets major and minor tick locators from Rivet plot info."""
     axis_lists = ((upper.get_xaxis, lower.get_xaxis), (upper.get_yaxis, ))
-    for axis_list, key in zip(axis_lists, prepend_x_y('MajorTickMarks')):
-        try:
-            locator = MultipleLocator(int(plot_info[key]))
-            for axis in axis_list:
-                axis.set_major_locator()
-        except KeyError:
-            pass
+    # NOTE: It's not clear to me how MajorTickMarks is supposed to work
+    # for axis_list, key in zip(axis_lists, prepend_x_y('MajorTickMarks')):
+    #     try:
+    #         print int(plot_info[key])
+    #         locator = MultipleLocator(int(plot_info[key]))
+    #         for axis in axis_list:
+    #             axis().set_major_locator(locator)
+    #     except KeyError:
+    #         pass
     for axis_list, key in zip(axis_lists, prepend_x_y('MinorTickMarks')):
         try:
             nticks = int(plot_info[key])
@@ -97,7 +99,7 @@ def set_tick_locators(plot_info, upper, lower):
             else:
                 locator = MaxNLocator(nbins=nticks + 1)
             for axis in axis_list:
-                axis.set_minor_locator(locator)
+                axis().set_minor_locator(locator)
         except KeyError:
             pass
 

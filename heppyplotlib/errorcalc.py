@@ -17,7 +17,7 @@ def combine(files, rivet_path, error_calc):
         y_coord_list.append(yodaplot.get_y_coords(data_object))
     errs = error_calc(y_coord_list)
     # make sure we are dealing with a scatter object to have the correct notion of errors
-    scatter = yoda.mkScatter(data_object)
+    scatter = yoda.mkScatter(yodaplot.resolve_data_object(files[0], rivet_path))
     for point, point_errs in zip(scatter.points, zip(*errs)):
         point.yErrs = point_errs
     return scatter
