@@ -32,6 +32,7 @@ def gridplot(file_name, uses_rivet_plot_info=True):
     return fig, axes_list
 
 def rivet_paths(file_name):
+    """Return all :py:mod:`rivet` paths found at file_name."""
     from . import yodaplot
     return yodaplot.data_object_names(file_name)
 
