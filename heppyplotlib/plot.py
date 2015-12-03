@@ -91,7 +91,7 @@ def plot(filename, rivet_path, uses_rivet_plot_info=True, errors_enabled=None, *
         from . import rivetplot
         errors_enabled = rivetplot.errors_enabled(rivet_path)
     else:
-        errors_enabled = True
+        errors_enabled = True if errors_enabled is None else errors_enabled
     yodaplot.plot(filename, rivet_path, errors_enabled=errors_enabled, **kwargs)
     if uses_rivet_plot_info:
         rivetplot.apply_plot_info(rivet_path)
