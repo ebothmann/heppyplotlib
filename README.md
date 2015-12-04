@@ -17,3 +17,5 @@ import heppyplotlib as hpl
 hpl.plot('Analysis.yoda', '/ANALYSIS/HISTOGRAM')
 plt.show()
 ```
+
+Example scripts can be found in `examples/`.

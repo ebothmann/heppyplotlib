@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import MaxNLocator
 
+def rivet_paths(file_name):
+    """Return all :py:mod:`rivet` paths found at file_name."""
+    from . import yodaplot
+    return yodaplot.data_object_names(file_name)
+
 def gridplot(file_name, uses_rivet_plot_info=True):
     """Convenience function to plot all :py:mod:`yoda` data objects
     from a :py:mod:`yoda` file into a subplots grid.
@@ -14,27 +19,22 @@ def gridplot(file_name, uses_rivet_plot_info=True):
     """
     from . import yodaplot
 
-    rivet_paths = rivet_paths(file_name)
+    all_rivet_paths = rivet_paths(file_name)
 
     # setup axes
-    if len(rivet_paths) == 1:
+    if len(all_rivet_paths) == 1:
         fig, axes_list = plt.subplots()
     else:
         ncols = 2
-        nrows = (len(rivet_paths) - 1) / ncols + 1
+        nrows = (len(all_rivet_paths) - 1) / ncols + 1
         fig, axes_list = plt.subplots(nrows, ncols, squeeze=False)
 
     # plot into axes
-    for rivet_path, axes in zip(rivet_paths, np.ravel(axes_list)):
+    for rivet_path, axes in zip(all_rivet_paths, np.ravel(axes_list)):
         plt.sca(axes)
         plot(file_name, rivet_path, uses_rivet_plot_info=uses_rivet_plot_info)
 
     return fig, axes_list
-
-def rivet_paths(file_name):
-    """Return all :py:mod:`rivet` paths found at file_name."""
-    from . import yodaplot
-    return yodaplot.data_object_names(file_name)
 
 def ratioplot(files_or_data_objects, rivet_path,
               divide_by=0, uses_rivet_plot_info=True, axes_list=None, draws_legend=True):
