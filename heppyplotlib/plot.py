@@ -48,6 +48,7 @@ def plot(filename, rivet_path, uses_rivet_plot_info=True, errors_enabled=None,
     yodaplot.plot(filename, rivet_path, errors_enabled=errors_enabled,
                   **kwargs)
     if uses_rivet_plot_info:
+        from . import rivetplot
         rivetplot.apply_plot_info(rivet_path)
 
 
