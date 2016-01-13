@@ -45,11 +45,12 @@ def plot(filename, rivet_path, uses_rivet_plot_info=True, errors_enabled=None,
         errors_enabled = rivetplot.errors_enabled(rivet_path)
     else:
         errors_enabled = True if errors_enabled is None else errors_enabled
-    yodaplot.plot(filename, rivet_path, errors_enabled=errors_enabled,
-                  **kwargs)
+    result = yodaplot.plot(filename, rivet_path, errors_enabled=errors_enabled,
+                           **kwargs)
     if uses_rivet_plot_info:
         from . import rivetplot
         rivetplot.apply_plot_info(rivet_path)
+    return result
 
 
 def plot_data_object(data_object, rivet_path,
@@ -60,7 +61,10 @@ def plot_data_object(data_object, rivet_path,
         from . import rivetplot
     if uses_rivet_plot_info and errors_enabled is None:
         errors_enabled = rivetplot.errors_enabled(rivet_path)
-    yodaplot.plot_data_object(data_object, errors_enabled=errors_enabled,
-                              **kwargs)
+    else:
+        errors_enabled = True if errors_enabled is None else errors_enabled
+    result = yodaplot.plot_data_object(data_object, errors_enabled=errors_enabled,
+                                       **kwargs)
     if uses_rivet_plot_info:
         rivetplot.apply_plot_info(rivet_path)
+    return result

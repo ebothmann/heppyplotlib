@@ -7,15 +7,14 @@ import yoda
 def plot(filename_or_data_object, data_object_name, errors_enabled=True, visible=True, **kwargs):
     """Plots a data object from a YODA file."""
     data_object = resolve_data_object(filename_or_data_object, data_object_name)
-    plot_data_object(data_object, errors_enabled, visible, **kwargs)
+    return plot_data_object(data_object, errors_enabled, visible, **kwargs)
 
 def plot_data_object(data_object, errors_enabled=True, visible=True, **kwargs):
     """Plots a YODA data object."""
     plotfunctions = {yoda.Scatter2D: plot_scatter2d, yoda.Histo1D: plot_histo1d}
     for classinfo, plotfunction in plotfunctions.items():
         if isinstance(data_object, classinfo):
-            plotfunction(data_object, errors_enabled, visible, **kwargs)
-            return
+            return plotfunction(data_object, errors_enabled, visible, **kwargs)
     raise Exception('Unknown type of YODA data object: ', data_object)
 
 def get_y_coords(yoda_data_object):
@@ -42,11 +41,11 @@ def plot_scatter2d(scatter, errors_enabled=True, visible=True, **kwargs):
         x_errs = None
         y_errs = None
     if not bins_are_adjacent:
-        plt.errorbar(x_coords, y_coords,
-                     fmt='o', xerr=x_errs, yerr=y_errs, visible=visible, **kwargs)
+        return plt.errorbar(x_coords, y_coords,
+                            fmt='o', xerr=x_errs, yerr=y_errs, visible=visible, **kwargs)
     else:
-        step_with_errorbar_using_points(x_coords, x_errs, y_coords, y_errs,
-                                        errors_enabled=errors_enabled, visible=visible, **kwargs)
+        return step_with_errorbar_using_points(x_coords, x_errs, y_coords, y_errs,
+                                               errors_enabled=errors_enabled, visible=visible, **kwargs)
 
 def get_scatter2d_y_coords(scatter):
     """Return y coordinates for a Scatter2D object."""
@@ -60,13 +59,14 @@ def plot_histo1d(histo, errors_enabled=True, visible=True, **kwargs):
     y_coord = get_histo1d_y_coords(histo)
     y_errs = [histo_bin.heightErr for histo_bin in histo.bins]
     if not bins_are_adjacent:
-        plt.bar(x_lefts, y_coord, width=widths, yerr=y_errs, visible=visible, **kwargs)
+        result = plt.bar(x_lefts, y_coord, width=widths, yerr=y_errs, visible=visible, **kwargs)
     else:
-        plot_step_with_errorbar(x_lefts, widths, y_coord, y_errs,
-                                errors_enabled=errors_enabled, visible=visible, **kwargs)
+        result = plot_step_with_errorbar(x_lefts, widths, y_coord, y_errs,
+                                         errors_enabled=errors_enabled, visible=visible, **kwargs)
     # fix stupid automatic limits
     margins = (0, 0)  # (width[0]/4.0, width[-1]/4.0)
     plt.xlim(x_lefts[0] - margins[0], x_lefts[-1] + margins[1])
+    return result
 
 def get_histo1d_y_coords(histo):
     """Return y coordinates for a Histo1D object."""
@@ -97,20 +97,21 @@ def step_with_errorbar_using_points(x_coords, x_errs, y_coords, y_errs,
     """Makes a step plot with error bars from points."""
     left = [coord - err_left for coord, err_left in zip(x_coords, x_errs[0])]
     widths = [err_left + err_right for err_left, err_right in zip(x_errs[0], x_errs[1])]
-    plot_step_with_errorbar(left, widths, y_coords, y_errs, errors_enabled, **kwargs)
+    return plot_step_with_errorbar(left, widths, y_coords, y_errs, errors_enabled, **kwargs)
 
 def plot_step_with_errorbar(lefts, widths, y_coords, y_errs,
                             errors_enabled=True, **kwargs):
     """Makes a step plot with error bars."""
     lefts.append(lefts[-1] + widths[-1])
     y_coords.append(y_coords[-1])
-    plt.step(lefts, y_coords, where='post', **kwargs)
+    step_result = plt.step(lefts, y_coords, where='post', **kwargs)
     if errors_enabled:
         ecolor = plt.gca().lines[-1].get_color()  # do not use the next color from the color cycle
         zorder = plt.gca().lines[-1].get_zorder() - 1  # make sure it's drawn below
-        plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder)
+        errorrects_result = plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder)
         # x_mids = [left + width / 2.0 for left, width in zip(lefts[:-1], widths)]
         # plt.errorbar(x_mids, y_coords[:-1], fmt='none', yerr=y_errs, ecolor=ecolor)
+    return step_result, errorrects_result
 
 def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1):
     """Draws the y errors as an envelope for a step plot."""
@@ -128,10 +129,10 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1):
     except TypeError:
         y_down = np.ravel([[y - y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
         y_up = np.ravel([[y + y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
-    plt.fill_between(lefts, y_up, y_down,
-                     color=color,
-                     alpha=0.3,
-                     zorder=zorder, linewidth=0)
+    return plt.fill_between(lefts, y_up, y_down,
+                            color=color,
+                            alpha=0.3,
+                            zorder=zorder, linewidth=0)
 
 def data_object_names(filename):
     """Retrieves all data object names from a YODA file."""

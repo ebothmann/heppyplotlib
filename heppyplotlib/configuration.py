@@ -2,11 +2,10 @@
 
 import matplotlib.pyplot as plt
 
-def use_tex(useserif=False):
+def use_tex(use_serif=False):
     """Configure pyplot to use LaTeX for text rendering."""
     print "Will use tex for rendering ..."
-    plt.rc('text', usetex=True)
-    if useserif:
+    if use_serif:
         plt.rc('font', family='serif')
         preamble = [r'\usepackage{amsmath}',
                     r'\usepackage{siunitx}']
@@ -18,6 +17,7 @@ def use_tex(useserif=False):
                     r'\usepackage{sansmath}',       # load up the sansmath for sans-serif math
                     r'\sansmath']                   # enable sansmath
     plt.rcParams['text.latex.preamble'] = preamble
+    plt.rc('text', usetex=True)
 
 
 def set_font_sizes(normal=9, small=8):
