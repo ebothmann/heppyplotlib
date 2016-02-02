@@ -39,3 +39,14 @@ def asymmetric_hessian_error(value_lists):
         negative_errs.append(math.sqrt(error[0]))
         positive_errs.append(math.sqrt(error[1]))
     return (negative_errs, positive_errs)
+
+def envelope_error(value_lists):
+    """Calculate the envelope of a list of datasets.
+    The returned "errors" are relative to the first dataset."""
+    negative_errs = []
+    positive_errs = []
+    transposed_value_lists = zip(*value_lists)
+    for values in transposed_value_lists:
+        negative_errs.append(values[0] - min(values))
+        positive_errs.append(max(values) - values[0])
+    return (negative_errs, positive_errs)
