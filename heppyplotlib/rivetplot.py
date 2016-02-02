@@ -16,6 +16,16 @@ def errors_enabled(rivet_path):
     except KeyError:
         return True
 
+
+def rebin_count(rivet_path):
+    """Returns how many consecutive bins Rivet wants to be combined."""
+    plot_info = load_plot_info(rivet_path)
+    try:
+        return int(plot_info['Rebin'])
+    except KeyError:
+        return 1
+
+
 def legend_location_kwargs(rivet_path):
     """Returns what legend location Rivet wants us to use."""
     plot_info = load_plot_info(rivet_path)

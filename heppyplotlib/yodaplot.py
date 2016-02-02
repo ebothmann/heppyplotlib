@@ -4,17 +4,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 import yoda
 
-def plot(filename_or_data_object, data_object_name, errors_enabled=True, visible=True, **kwargs):
-    """Plots a data object from a YODA file."""
-    data_object = resolve_data_object(filename_or_data_object, data_object_name)
+def plot(filename_or_data_object, data_object_name,
+         errors_enabled=True, rebin_count=1, visible=True,
+         **kwargs):
+    """Plots a data object, potentially from a YODA file."""
+    data_object = resolve_data_object(filename_or_data_object, data_object_name,
+                                      rebin_count=rebin_count)
     return plot_data_object(data_object, errors_enabled, visible, **kwargs)
 
-def plot_data_object(data_object, errors_enabled=True, visible=True, **kwargs):
+def plot_data_object(data_object,
+                     errors_enabled=True, visible=True,
+                     **kwargs):
     """Plots a YODA data object."""
     plotfunctions = {yoda.Scatter2D: plot_scatter2d, yoda.Histo1D: plot_histo1d}
     for classinfo, plotfunction in plotfunctions.items():
         if isinstance(data_object, classinfo):
-            return plotfunction(data_object, errors_enabled, visible, **kwargs)
+            return plotfunction(data_object, errors_enabled, rebin_count, visible, **kwargs)
     raise Exception('Unknown type of YODA data object: ', data_object)
 
 def get_y_coords(yoda_data_object):
@@ -141,14 +146,15 @@ def data_object_names(filename):
     return [key for key in data_objects.keys()
             if not data_objects[key].type in ('Counter', 'Scatter1D')]
 
-def resolve_data_object(filename_or_data_object, name, divide_by=None):
+def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_count=1):
     """Take passed data object or loads a data object from a YODA file,
     and return it after dividing by divide_by."""
     if isinstance(filename_or_data_object, basestring):
         data_object = yoda.readYODA(filename_or_data_object)[name]
-        # data_object.rebin(2)
     else:
         data_object = filename_or_data_object
+    if not rebin_count == 1:
+        data_object.rebin(rebin_count)
     if divide_by is not None:
         divided_data_object = data_object.clone()
         divide_by = resolve_data_object(divide_by, name)

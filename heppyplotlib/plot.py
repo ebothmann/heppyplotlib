@@ -1,5 +1,7 @@
 """Functions for plotting data files."""
 
+from __future__ import print_function
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -35,36 +37,35 @@ def gridplot(file_name, uses_rivet_plot_info=True):
     return fig, axes_list
 
 
-def plot(filename, rivet_path, uses_rivet_plot_info=True, errors_enabled=None,
+def plot(filename_or_data_object, rivet_path,
+         uses_rivet_plot_info=True, errors_enabled=None,
          **kwargs):
-    """Plot a YODA data object from a YODA file."""
+    """Plot a :py:mod:`yoda` data object, potentially from a :py:mod:`yoda` file."""
     from . import yodaplot
-    print "Plotting", rivet_path, "from", filename, "..."
+
+    print("Plotting", rivet_path, end="")
+    if isinstance(filename_or_data_object, basestring):
+        print("from", filename_or_data_object, "...")
+    else:
+        print()
+
     if uses_rivet_plot_info and errors_enabled is None:
         from . import rivetplot
         errors_enabled = rivetplot.errors_enabled(rivet_path)
     else:
         errors_enabled = True if errors_enabled is None else errors_enabled
-    result = yodaplot.plot(filename, rivet_path, errors_enabled=errors_enabled,
+
+    if uses_rivet_plot_info:
+        from . import rivetplot
+        rebin_count = rivetplot.rebin_count(rivet_path)
+    else:
+        rebin_count = 1
+
+    result = yodaplot.plot(filename_or_data_object, rivet_path,
+                           errors_enabled=errors_enabled,
+                           rebin_count=rebin_count,
                            **kwargs)
     if uses_rivet_plot_info:
         from . import rivetplot
-        rivetplot.apply_plot_info(rivet_path)
-    return result
-
-
-def plot_data_object(data_object, rivet_path,
-                     uses_rivet_plot_info=True, errors_enabled=None, **kwargs):
-    """Plot a YODA data object."""
-    from . import yodaplot
-    if uses_rivet_plot_info:
-        from . import rivetplot
-    if uses_rivet_plot_info and errors_enabled is None:
-        errors_enabled = rivetplot.errors_enabled(rivet_path)
-    else:
-        errors_enabled = True if errors_enabled is None else errors_enabled
-    result = yodaplot.plot_data_object(data_object, errors_enabled=errors_enabled,
-                                       **kwargs)
-    if uses_rivet_plot_info:
         rivetplot.apply_plot_info(rivet_path)
     return result
