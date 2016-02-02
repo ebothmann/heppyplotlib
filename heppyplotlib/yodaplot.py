@@ -104,16 +104,16 @@ def plot_step_with_errorbar(lefts, widths, y_coords, y_errs,
     """Makes a step plot with error bars."""
     lefts.append(lefts[-1] + widths[-1])
     y_coords.append(y_coords[-1])
-    step_result = plt.step(lefts, y_coords, where='post', **kwargs)
+    step_result = plt.step(lefts, y_coords, where='post')
     if errors_enabled:
         ecolor = plt.gca().lines[-1].get_color()  # do not use the next color from the color cycle
         zorder = plt.gca().lines[-1].get_zorder() - 1  # make sure it's drawn below
-        errorrects_result = plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder)
+        errorrects_result = plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder, **kwargs)
         # x_mids = [left + width / 2.0 for left, width in zip(lefts[:-1], widths)]
         # plt.errorbar(x_mids, y_coords[:-1], fmt='none', yerr=y_errs, ecolor=ecolor)
     return step_result, errorrects_result
 
-def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1):
+def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1, **kwargs):
     """Draws the y errors as an envelope for a step plot."""
     try:
         if not len(y_errs) == len(lefts) - 1:
@@ -132,7 +132,8 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1):
     return plt.fill_between(lefts, y_up, y_down,
                             color=color,
                             alpha=0.3,
-                            zorder=zorder, linewidth=0)
+                            linewidth=0.0,
+                            zorder=zorder, **kwargs)
 
 def data_object_names(filename):
     """Retrieves all data object names from a YODA file."""
@@ -145,6 +146,7 @@ def resolve_data_object(filename_or_data_object, name, divide_by=None):
     and return it after dividing by divide_by."""
     if isinstance(filename_or_data_object, basestring):
         data_object = yoda.readYODA(filename_or_data_object)[name]
+        # data_object.rebin(2)
     else:
         data_object = filename_or_data_object
     if divide_by is not None:
