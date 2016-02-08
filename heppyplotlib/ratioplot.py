@@ -10,6 +10,7 @@ from .plot import plot
 
 def ratioplot(files_or_data_objects, rivet_path,
               divide_by=0, uses_rivet_plot_info=True,
+              errors_enabled=None,
               axes_list=None, draws_legend=True,
               labels=None,
               **kwargs):
@@ -24,7 +25,8 @@ def ratioplot(files_or_data_objects, rivet_path,
         axes_list = ratioplots()[1]
 
     plt.sca(axes_list[0])
-    plot_nominal(files_or_data_objects, rivet_path, labels=labels, **kwargs)
+    plot_nominal(files_or_data_objects, rivet_path,
+                 labels=labels, errors_enabled=errors_enabled, **kwargs)
 
     if draws_legend:
         if uses_rivet_plot_info:
@@ -39,7 +41,8 @@ def ratioplot(files_or_data_objects, rivet_path,
     if isinstance(divide_by, int):
         divide_by = files_or_data_objects[divide_by]
 
-    plot_diff(files_or_data_objects, rivet_path, divide_by, **kwargs)
+    plot_diff(files_or_data_objects, rivet_path, divide_by,
+              errors_enabled=errors_enabled, **kwargs)
 
     if uses_rivet_plot_info:
         from . import rivetplot
@@ -73,7 +76,7 @@ def layout_main_and_diff_axis(main, diff):
                                              prune='upper'))
 
 
-def plot_nominal(files_or_data_objects, rivet_path, labels=None, **kwargs):
+def plot_nominal(files_or_data_objects, rivet_path, errors_enabled=None, labels=None, **kwargs):
     """Populate the upper (nominal) pane of a ratio plot."""
     for i, filename_or_data_object in enumerate(files_or_data_objects):
         if labels is not None:
@@ -85,15 +88,19 @@ def plot_nominal(files_or_data_objects, rivet_path, labels=None, **kwargs):
                 label = filename_or_data_object.path.replace('_', r'\_')
         plot(filename_or_data_object, rivet_path,
              uses_rivet_plot_info=False,
+             errors_enabled=errors_enabled,
              label=label,
              **kwargs)
 
 
-def plot_diff(files_or_data_objects, rivet_path, divide_by, **kwargs):
+def plot_diff(files_or_data_objects, rivet_path, divide_by, errors_enabled=None, **kwargs):
     "Populate the lower (diff) pane of a ratio plot."""
     from . import yodaplot
     for filename_or_data_object in files_or_data_objects:
         data_object = yodaplot.resolve_data_object(filename_or_data_object,
                                                    rivet_path,
                                                    divide_by=divide_by)
-        yodaplot.plot_data_object(data_object, visible=True, **kwargs)
+        plot(data_object, rivet_path,
+             uses_rivet_plot_info=False,
+             errors_enabled=errors_enabled,
+             **kwargs)

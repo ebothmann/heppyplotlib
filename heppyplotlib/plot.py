@@ -45,7 +45,7 @@ def plot(filename_or_data_object, rivet_path,
 
     print("Plotting", rivet_path, end="")
     if isinstance(filename_or_data_object, basestring):
-        print("from", filename_or_data_object, "...")
+        print(" from", filename_or_data_object, "...")
     else:
         print()
 

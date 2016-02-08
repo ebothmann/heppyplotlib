@@ -19,7 +19,7 @@ def plot_data_object(data_object,
     plotfunctions = {yoda.Scatter2D: plot_scatter2d, yoda.Histo1D: plot_histo1d}
     for classinfo, plotfunction in plotfunctions.items():
         if isinstance(data_object, classinfo):
-            return plotfunction(data_object, errors_enabled, rebin_count, visible, **kwargs)
+            return plotfunction(data_object, errors_enabled, visible, **kwargs)
     raise Exception('Unknown type of YODA data object: ', data_object)
 
 def get_y_coords(yoda_data_object):
@@ -33,14 +33,17 @@ def plot_scatter2d(scatter, errors_enabled=True, visible=True, **kwargs):
     """Plots a YODA Scatter2D object."""
     x_coords = [point.x for point in scatter.points]
     y_coords = get_scatter2d_y_coords(scatter)
-    if errors_enabled and visible:
+    if visible:
         x_errs = []
         x_errs.append([point.xErrs[0] for point in scatter.points])
         x_errs.append([point.xErrs[1] for point in scatter.points])
-        y_errs = []
-        y_errs.append([point.yErrs[0] for point in scatter.points])
-        y_errs.append([point.yErrs[1] for point in scatter.points])
         bins_are_adjacent = are_points_with_errors_adjacent(x_coords, x_errs)
+        if errors_enabled:
+            y_errs = []
+            y_errs.append([point.yErrs[0] for point in scatter.points])
+            y_errs.append([point.yErrs[1] for point in scatter.points])
+        else:
+            y_errs = None
     else:
         bins_are_adjacent = False
         x_errs = None
@@ -58,11 +61,15 @@ def get_scatter2d_y_coords(scatter):
 
 def plot_histo1d(histo, errors_enabled=True, visible=True, **kwargs):
     """Plots a YODA Histo1D object."""
-    x_lefts = [histo_bin.xEdges[0] for histo_bin in histo.bins]
-    widths = [histo_bin.xEdges[1] - histo_bin.xEdges[0] for histo_bin in histo.bins]
+    return plot_histo1d_bins(histo.bins, errors_enabled, visible, **kwargs)
+
+def plot_histo1d_bins(bins, errors_enabled=True, visible=True, **kwargs):
+    """Plots YODA Histo 1D bins."""
+    x_lefts = [histo_bin.xEdges[0] for histo_bin in bins]
+    widths = [histo_bin.xEdges[1] - histo_bin.xEdges[0] for histo_bin in bins]
     bins_are_adjacent = are_bins_adjacent(x_lefts, widths)
-    y_coord = get_histo1d_y_coords(histo)
-    y_errs = [histo_bin.heightErr for histo_bin in histo.bins]
+    y_coord = get_histo1d_y_coords(bins)
+    y_errs = [histo_bin.heightErr for histo_bin in bins]
     if not bins_are_adjacent:
         result = plt.bar(x_lefts, y_coord, width=widths, yerr=y_errs, visible=visible, **kwargs)
     else:
@@ -73,9 +80,13 @@ def plot_histo1d(histo, errors_enabled=True, visible=True, **kwargs):
     plt.xlim(x_lefts[0] - margins[0], x_lefts[-1] + margins[1])
     return result
 
-def get_histo1d_y_coords(histo):
+def get_histo1d_y_coords(histo_or_bins):
     """Return y coordinates for a Histo1D object."""
-    return [histo_bin.height for histo_bin in histo.bins]
+    if isinstance(histo_or_bins, yoda.Histo1D):
+        bins = histo_or_bins.bins
+    else:
+        bins = histo_or_bins
+    return [histo_bin.height for histo_bin in bins]
 
 def are_points_with_errors_adjacent(points, errs):
     """Returns whether a given set of points are adjacent when taking their errors into account."""
@@ -109,13 +120,22 @@ def plot_step_with_errorbar(lefts, widths, y_coords, y_errs,
     """Makes a step plot with error bars."""
     lefts.append(lefts[-1] + widths[-1])
     y_coords.append(y_coords[-1])
-    step_result = plt.step(lefts, y_coords, where='post')
+    # prevent that we have labels for the step and the errorbar,
+    # otherwise we have two legend entries per data set
+    if errors_enabled and "label" in kwargs:
+        step_kwargs = dict(kwargs)
+        del step_kwargs["label"]
+    else:
+        step_kwargs = kwargs
+    step_result = plt.step(lefts, y_coords, where='post', **step_kwargs)
     if errors_enabled:
         ecolor = plt.gca().lines[-1].get_color()  # do not use the next color from the color cycle
         zorder = plt.gca().lines[-1].get_zorder() - 1  # make sure it's drawn below
         errorrects_result = plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder, **kwargs)
         # x_mids = [left + width / 2.0 for left, width in zip(lefts[:-1], widths)]
         # plt.errorbar(x_mids, y_coords[:-1], fmt='none', yerr=y_errs, ecolor=ecolor)
+    else:
+        errorrects_result = None
     return step_result, errorrects_result
 
 def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1, **kwargs):
@@ -152,16 +172,16 @@ def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_cou
     if isinstance(filename_or_data_object, basestring):
         data_object = yoda.readYODA(filename_or_data_object)[name]
     else:
-        data_object = filename_or_data_object
+        data_object = filename_or_data_object.clone()
     if not rebin_count == 1:
         data_object.rebin(rebin_count)
     if divide_by is not None:
-        divided_data_object = data_object.clone()
         divide_by = resolve_data_object(divide_by, name)
         if data_object.type == "Histo1D":
-            divided_data_object = data_object.divideBy(divide_by)
+            data_object = data_object.divideBy(divide_by)
         elif data_object.type == "Scatter2D":
-            for point, denominator_point in zip(divided_data_object.points, divide_by.points):
+            # we make sure that also divide_by is a Scatter2D before using its points property
+            for point, denominator_point in zip(data_object.points, yoda.mkScatter(divide_by).points):
                 if denominator_point.y == 0.0:
                     new_y = 1.0
                     new_y_errs = [0.0, 0.0]
@@ -181,6 +201,4 @@ def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_cou
                 #     new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
                 point.y = new_y
                 point.yErrs = new_y_errs
-        return divided_data_object
-    else:
-        return data_object
+    return data_object
