@@ -116,22 +116,29 @@ def step_with_errorbar_using_points(x_coords, x_errs, y_coords, y_errs,
     return plot_step_with_errorbar(left, widths, y_coords, y_errs, errors_enabled, **kwargs)
 
 def plot_step_with_errorbar(lefts, widths, y_coords, y_errs,
-                            errors_enabled=True, **kwargs):
+                            errors_enabled=True, use_errorrects_for_legend=False, **kwargs):
     """Makes a step plot with error bars."""
     lefts.append(lefts[-1] + widths[-1])
     y_coords.append(y_coords[-1])
     # prevent that we have labels for the step and the errorbar,
     # otherwise we have two legend entries per data set
+    step_kwargs = dict(kwargs)
+    rect_kwargs = dict(kwargs)
     if errors_enabled and "label" in kwargs:
-        step_kwargs = dict(kwargs)
-        del step_kwargs["label"]
-    else:
-        step_kwargs = kwargs
+        if use_errorrects_for_legend:
+            del step_kwargs["label"]
+        else:
+            del rect_kwargs["label"]
+    # delete kw args that are not defined for plt.step
+    try:
+        del step_kwargs["hatch"]
+    except KeyError:
+        pass
     step_result = plt.step(lefts, y_coords, where='post', **step_kwargs)
     if errors_enabled:
         ecolor = plt.gca().lines[-1].get_color()  # do not use the next color from the color cycle
         zorder = plt.gca().lines[-1].get_zorder() - 1  # make sure it's drawn below
-        errorrects_result = plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder, **kwargs)
+        errorrects_result = plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder, **rect_kwargs)
         # x_mids = [left + width / 2.0 for left, width in zip(lefts[:-1], widths)]
         # plt.errorbar(x_mids, y_coords[:-1], fmt='none', yerr=y_errs, ecolor=ecolor)
     else:
@@ -154,11 +161,20 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1, **kwargs):
     except TypeError:
         y_down = np.ravel([[y - y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
         y_up = np.ravel([[y + y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
-    return plt.fill_between(lefts, y_up, y_down,
-                            color=color,
-                            alpha=0.3,
-                            linewidth=0.0,
-                            zorder=zorder, **kwargs)
+    if 'hatch' in kwargs:
+        print kwargs
+        return plt.fill_between(lefts, y_up, y_down,
+                                color='none',
+                                edgecolor=color,
+                                linewidth=1.0,
+                                zorder=zorder, **kwargs)
+    else:
+        if not 'alpha' in kwargs:
+            kwargs['alpha'] = 0.3
+        return plt.fill_between(lefts, y_up, y_down,
+                                color=color,
+                                linewidth=0.0,
+                                zorder=zorder, **kwargs)
 
 def data_object_names(filename):
     """Retrieves all data object names from a YODA file."""

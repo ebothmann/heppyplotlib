@@ -1,6 +1,7 @@
 """Functions for calculating errors by combining different datasets."""
 
 import math
+import numpy as np
 
 def combine(files, rivet_path, error_calc):
     """Combine files[1]/rivet_path, files[2]/rivet_path, ...
@@ -21,6 +22,23 @@ def combine(files, rivet_path, error_calc):
     for point, point_errs in zip(scatter.points, zip(*errs)):
         point.yErrs = point_errs
     return scatter
+
+def standard_error(value_lists):
+    """Calculate the standard error from a list of datasets,
+    where the first dataset stems from a CV run."""
+    negative_errs = []
+    positive_errs = []
+    transposed_value_lists = zip(*value_lists)
+    for values in transposed_value_lists:
+        replicas = values[1:]
+        central_value = np.mean(replicas)
+        sum_of_squared_deviations = 0.0
+        for replica in replicas:
+            sum_of_squared_deviations += (replica - central_value)**2
+        error = math.sqrt(sum_of_squared_deviations / (len(replicas) - 1))
+        negative_errs.append(error)
+        positive_errs.append(error)
+    return (negative_errs, positive_errs)
 
 def asymmetric_hessian_error(value_lists):
     """Calculate the asymmetric hessian error from a list of datasets,

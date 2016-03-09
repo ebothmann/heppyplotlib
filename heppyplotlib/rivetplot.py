@@ -77,7 +77,7 @@ def set_labels(plot_info, upper, lower):
         except KeyError:
             pass
     if requires_tex:
-        configuration.use_tex()
+        configuration.use_tex(overwrite=False)
 
 def set_axis_limits(plot_info, upper, lower):
     """Sets axis limits from Rivet plot info."""

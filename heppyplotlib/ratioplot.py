@@ -13,6 +13,8 @@ def ratioplot(files_or_data_objects, rivet_path,
               errors_enabled=None,
               axes_list=None, draws_legend=True,
               labels=None,
+              styles=None,
+              diff_ylabel=None,
               **kwargs):
     """Convenience function to plot data objects (directly passed or taken from
     files) into a nominal pane and a diff pane"""
@@ -26,7 +28,8 @@ def ratioplot(files_or_data_objects, rivet_path,
 
     plt.sca(axes_list[0])
     plot_nominal(files_or_data_objects, rivet_path,
-                 labels=labels, errors_enabled=errors_enabled, **kwargs)
+                 labels=labels, styles=styles,
+                 errors_enabled=errors_enabled, **kwargs)
 
     if draws_legend:
         if uses_rivet_plot_info:
@@ -41,13 +44,15 @@ def ratioplot(files_or_data_objects, rivet_path,
     if isinstance(divide_by, int):
         divide_by = files_or_data_objects[divide_by]
 
-    plot_diff(files_or_data_objects, rivet_path, divide_by,
+    plot_diff(files_or_data_objects, rivet_path, divide_by, styles=styles,
               errors_enabled=errors_enabled, **kwargs)
 
     if uses_rivet_plot_info:
         from . import rivetplot
         rivetplot.apply_plot_info(rivet_path, axes_list[0], axes_list[1])
 
+    plt.ylabel(diff_ylabel)
+    plt.tight_layout()
     layout_main_and_diff_axis(axes_list[0], axes_list[1])
 
     return axes_list
@@ -76,7 +81,9 @@ def layout_main_and_diff_axis(main, diff):
                                              prune='upper'))
 
 
-def plot_nominal(files_or_data_objects, rivet_path, errors_enabled=None, labels=None, **kwargs):
+def plot_nominal(files_or_data_objects, rivet_path,
+                 errors_enabled=None, styles=None,
+                 labels=None, **kwargs):
     """Populate the upper (nominal) pane of a ratio plot."""
     for i, filename_or_data_object in enumerate(files_or_data_objects):
         if labels is not None:
@@ -86,21 +93,27 @@ def plot_nominal(files_or_data_objects, rivet_path, errors_enabled=None, labels=
                 label = filename_or_data_object.replace('_', r'\_')
             except AttributeError:
                 label = filename_or_data_object.path.replace('_', r'\_')
+        local_kwargs = dict(kwargs)
+        if styles is not None:
+            local_kwargs.update(styles[i])
         plot(filename_or_data_object, rivet_path,
              uses_rivet_plot_info=False,
              errors_enabled=errors_enabled,
              label=label,
-             **kwargs)
+             **local_kwargs)
 
 
-def plot_diff(files_or_data_objects, rivet_path, divide_by, errors_enabled=None, **kwargs):
-    "Populate the lower (diff) pane of a ratio plot."""
+def plot_diff(files_or_data_objects, rivet_path, divide_by, styles=None, errors_enabled=None, **kwargs):
+    """Populate the lower (diff) pane of a ratio plot."""
     from . import yodaplot
-    for filename_or_data_object in files_or_data_objects:
+    for i, filename_or_data_object in enumerate(files_or_data_objects):
         data_object = yodaplot.resolve_data_object(filename_or_data_object,
                                                    rivet_path,
                                                    divide_by=divide_by)
+        local_kwargs = dict(kwargs)
+        if styles is not None:
+            local_kwargs.update(styles[i])
         plot(data_object, rivet_path,
              uses_rivet_plot_info=False,
              errors_enabled=errors_enabled,
-             **kwargs)
+             **local_kwargs)

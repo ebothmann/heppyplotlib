@@ -2,17 +2,24 @@
 
 import matplotlib.pyplot as plt
 
-def use_tex(use_serif=False):
+def use_tex(use_serif=False, overwrite=True):
     """Configure pyplot to use LaTeX for text rendering."""
+
+    if plt.rcParams['text.usetex']  and not overwrite:
+        return
+
     print "Will use tex for rendering ..."
+
     if use_serif:
         plt.rc('font', family='serif')
         preamble = [r'\usepackage{amsmath}',
-                    r'\usepackage{siunitx}']
+                    r'\usepackage{siunitx}',
+                    r'\usepackage{hepnames}']
     else:
         preamble = [r'\usepackage{amsmath}',
                     r'\renewcommand*\familydefault{\sfdefault}',
                     r'\usepackage{siunitx}',
+                    r'\usepackage{hepnames}',
                     r'\sisetup{number-mode=text}',  # force siunitx to actually use your fonts
                     r'\usepackage{sansmath}',       # load up the sansmath for sans-serif math
                     r'\sansmath']                   # enable sansmath
@@ -42,7 +49,15 @@ def set_font_sizes(normal=9, small=8):
 
 
 def set_figure_size(latex_width, aspect_ratio=0.6875):
-    """Set figure size given a width in LaTeX points."""
+    r"""Set figure size given a width in LaTeX points.
+
+    Match LaTeX paper text width using:
+
+    .. code-block:: latex
+
+        \the\textwidth
+
+    """
     tex_points_per_inch = 72.27
     inches_per_tex_point = 1.0 / tex_points_per_inch
     inches_width = latex_width * inches_per_tex_point
