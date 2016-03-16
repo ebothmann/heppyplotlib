@@ -24,7 +24,11 @@ def ratioplot(files_or_data_objects, rivet_path,
         files_or_data_objects = [files_or_data_objects]
 
     if axes_list is None:
-        axes_list = ratioplots()[1]
+        plt.figure()
+        grid = gridspec.GridSpec(2, 1, height_ratios=[2, 1], hspace=0)
+        axes_list = ratioplot_setup_axes(grid)
+    else:
+        grid = None
 
     plt.sca(axes_list[0])
     plot_nominal(files_or_data_objects, rivet_path,
@@ -52,26 +56,23 @@ def ratioplot(files_or_data_objects, rivet_path,
         rivetplot.apply_plot_info(rivet_path, axes_list[0], axes_list[1])
 
     plt.ylabel(diff_ylabel)
-    plt.tight_layout()
-    layout_main_and_diff_axis(axes_list[0], axes_list[1])
 
+    return axes_list, grid
+
+
+def ratioplot_setup_axes(grid):
+    """Returns a figure and two axes on it intended for main and diff plots."""
+    axes_list = []
+    axes_list.append(plt.subplot(grid[0]))
+    axes_list.append(plt.subplot(grid[1], sharex=plt.subplot(grid[0])))
+    layout_main_and_diff_axes(axes_list[0], axes_list[1])
     return axes_list
 
 
-def ratioplots():
-    """Returns a figure and two axes on it intended for main and diff plots."""
-    fig = plt.figure()
-    axes_list = []
-    grid = gridspec.GridSpec(2, 1, height_ratios=[2, 1])
-    axes_list.append(plt.subplot(grid[0]))
-    axes_list.append(plt.subplot(grid[1], sharex=plt.subplot(grid[0])))
-    return fig, axes_list
-
-
-def layout_main_and_diff_axis(main, diff):
+def layout_main_and_diff_axes(main, diff):
     """Improves layout of a main-and-diff-plot figure by making them
     adjacent."""
-    plt.gcf().subplots_adjust(hspace=0.0)
+    # plt.gcf().subplots_adjust(hspace=0.0)
     main.spines['bottom'].set_visible(False)
     plt.setp(main.get_xticklabels(), visible=False)
     main.set_xlabel('')
