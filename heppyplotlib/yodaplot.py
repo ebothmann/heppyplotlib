@@ -136,7 +136,11 @@ def plot_step_with_errorbar(lefts, widths, y_coords, y_errs,
         pass
     step_result = plt.step(lefts, y_coords, where='post', **step_kwargs)
     if errors_enabled:
-        ecolor = plt.gca().lines[-1].get_color()  # do not use the next color from the color cycle
+        try:
+            ecolor = rect_kwargs["color"]
+            del rect_kwargs["color"]
+        except KeyError:
+            ecolor = plt.gca().lines[-1].get_color()  # do not use the next color from the color cycle
         zorder = plt.gca().lines[-1].get_zorder() - 1  # make sure it's drawn below
         errorrects_result = plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder, **rect_kwargs)
         # x_mids = [left + width / 2.0 for left, width in zip(lefts[:-1], widths)]
