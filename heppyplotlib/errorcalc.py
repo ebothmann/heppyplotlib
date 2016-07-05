@@ -3,7 +3,7 @@
 import math
 import numpy as np
 
-def combine(files, rivet_path, error_calc):
+def combine(files, rivet_path, error_calc, rebin_count=1):
     """Combine files[1]/rivet_path, files[2]/rivet_path, ...
     using an error_calc function from the heppyplotlib.error_calc
     module and return a YODA data object.
@@ -14,11 +14,12 @@ def combine(files, rivet_path, error_calc):
     from . import yodaplot
     y_coord_list = []
     for file_name in files:
-        data_object = yodaplot.resolve_data_object(file_name, rivet_path)
+        data_object = yodaplot.resolve_data_object(file_name, rivet_path, rebin_count=rebin_count)
         y_coord_list.append(yodaplot.get_y_coords(data_object))
     errs = error_calc(y_coord_list)
     # make sure we are dealing with a scatter object to have the correct notion of errors
-    scatter = yoda.mkScatter(yodaplot.resolve_data_object(files[0], rivet_path))
+    scatter = yoda.mkScatter(yodaplot.resolve_data_object(files[0],
+        rivet_path, rebin_count=rebin_count))
     for point, point_errs in zip(scatter.points, zip(*errs)):
         point.yErrs = point_errs
     return scatter

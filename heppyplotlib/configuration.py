@@ -2,27 +2,31 @@
 
 import matplotlib.pyplot as plt
 
-def use_tex(use_serif=False, overwrite=True):
+def use_tex(use_serif=True, overwrite=True, preamble=None):
     """Configure pyplot to use LaTeX for text rendering."""
 
-    if plt.rcParams['text.usetex']  and not overwrite:
+    if plt.rcParams['text.usetex'] and not overwrite:
+        print "Will not override tex settings ..."
         return
 
     print "Will use tex for rendering ..."
 
-    if use_serif:
-        plt.rc('font', family='serif')
-        preamble = [r'\usepackage{amsmath}',
-                    r'\usepackage{siunitx}',
-                    r'\usepackage{hepnames}']
-    else:
-        preamble = [r'\usepackage{amsmath}',
-                    r'\renewcommand*\familydefault{\sfdefault}',
-                    r'\usepackage{siunitx}',
-                    r'\usepackage{hepnames}',
-                    r'\sisetup{number-mode=text}',  # force siunitx to actually use your fonts
-                    r'\usepackage{sansmath}',       # load up the sansmath for sans-serif math
-                    r'\sansmath']                   # enable sansmath
+    if preamble is None:
+        if use_serif:
+            plt.rc('font', family='serif')
+            preamble = [r'\usepackage{amsmath}',
+                        r'\usepackage{siunitx}',
+                        r'\usepackage{hepnames}']
+        else:
+            # note that we do note even have a capital delta character (\Delta) apparently ...
+            # TODO: use a more complete sans serif font
+            preamble = [r'\usepackage{amsmath}',
+                        r'\renewcommand*\familydefault{\sfdefault}',
+                        r'\usepackage{siunitx}',
+                        r'\usepackage{hepnames}',
+                        r'\sisetup{number-mode=text}',  # force siunitx to actually use your fonts
+                        r'\usepackage{sansmath}',       # load up the sansmath for sans-serif math
+                        r'\sansmath']                   # enable sansmath
     plt.rcParams['text.latex.preamble'] = preamble
     plt.rc('text', usetex=True)
 
@@ -41,6 +45,8 @@ def set_font_sizes(normal=9, small=8):
     e.g. extract the font sizes for captions and subcaptions (as in the example)
     """
     params = {'font.size': normal,        # \thefontsize\small (like captions)
+              'figure.titlesize': normal,
+              'axes.titlesize': normal,
               'axes.labelsize': normal,
               'legend.fontsize': normal,
               'xtick.labelsize': small,   # \thefontsize\footnotesize (like subcaptions)

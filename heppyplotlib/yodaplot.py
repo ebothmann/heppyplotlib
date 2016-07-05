@@ -166,13 +166,13 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1, **kwargs):
         y_down = np.ravel([[y - y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
         y_up = np.ravel([[y + y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
     if 'hatch' in kwargs:
-        print kwargs
         return plt.fill_between(lefts, y_up, y_down,
                                 color='none',
                                 edgecolor=color,
-                                linewidth=1.0,
                                 zorder=zorder, **kwargs)
     else:
+        if 'linewidth' in kwargs:
+            del kwargs['linewidth']
         if not 'alpha' in kwargs:
             kwargs['alpha'] = 0.3
         return plt.fill_between(lefts, y_up, y_down,
