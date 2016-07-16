@@ -3,23 +3,29 @@
 import math
 import numpy as np
 
-def combine(files, rivet_path, error_calc, rebin_count=1):
+def combine(files, rivet_path, error_calc, rebin_count=None, rebin_counts=None):
     """Combine files[1]/rivet_path, files[2]/rivet_path, ...
     using an error_calc function from the heppyplotlib.error_calc
     module and return a YODA data object.
 
     files[0] is supposed to be the CV data set.
     """
+    if rebin_count is not None and rebin_counts is not None:
+        raise Exception("Only use one of the options 'rebin_count' and 'rebin_counts'.")
+    elif rebin_count is not None:
+        rebin_counts = [rebin_count] * len(files)
+    elif rebin_counts is None:
+        rebin_counts = [1] * len(files)
     import yoda
     from . import yodaplot
     y_coord_list = []
-    for file_name in files:
+    for file_name, rebin_count in zip(files, rebin_counts):
         data_object = yodaplot.resolve_data_object(file_name, rivet_path, rebin_count=rebin_count)
         y_coord_list.append(yodaplot.get_y_coords(data_object))
     errs = error_calc(y_coord_list)
     # make sure we are dealing with a scatter object to have the correct notion of errors
     scatter = yoda.mkScatter(yodaplot.resolve_data_object(files[0],
-        rivet_path, rebin_count=rebin_count))
+        rivet_path, rebin_count=rebin_counts[0]))
     for point, point_errs in zip(scatter.points, zip(*errs)):
         point.yErrs = point_errs
     return scatter
