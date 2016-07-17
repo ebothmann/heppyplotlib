@@ -132,6 +132,9 @@ def set_axis_scales(plot_info, upper, lower):
 def load_plot_info(rivet_path):
     """Loads Rivet plot information."""
     plot_parser = rivet.mkStdPlotParser()
+    if 'MCgrid_' == rivet_path[1:8]:
+        print "Stripping prefix 'MCgrid_' from rivet path when loading plot info"
+        rivet_path = '/' + rivet_path[8:]
     return plot_parser.getHeaders(rivet_path)
 
 def prepend_x_y(key):
