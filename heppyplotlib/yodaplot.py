@@ -201,10 +201,11 @@ def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_cou
         data_object.rebin(rebin_count)
     if divide_by is not None:
         divide_by = resolve_data_object(divide_by, name)
-        if data_object.type == "Histo1D":
+        if data_object.type == "Histo1D" and divide_by.type == "Histo1D":
             data_object = data_object.divideBy(divide_by)
-        elif data_object.type == "Scatter2D":
+        elif data_object.type == "Scatter2D" or divide_by.type == "Scatter2D":
             # we make sure that also divide_by is a Scatter2D before using its points property
+            data_object = yoda.mkScatter(data_object)
             for point, denominator_point in zip(data_object.points, yoda.mkScatter(divide_by).points):
                 if denominator_point.y == 0.0:
                     new_y = 1.0
