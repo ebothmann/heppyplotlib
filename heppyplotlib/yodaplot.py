@@ -190,7 +190,7 @@ def data_object_names(filename):
     return [key for key in data_objects.keys()
             if not data_objects[key].type in ('Counter', 'Scatter1D')]
 
-def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_count=1):
+def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_count=1, rebin_begin=0):
     """Take passed data object or loads a data object from a YODA file,
     and return it after dividing by divide_by."""
     if isinstance(filename_or_data_object, basestring):
@@ -198,7 +198,43 @@ def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_cou
     else:
         data_object = filename_or_data_object.clone()
     if not rebin_count == 1:
-        data_object.rebin(rebin_count)
+        if data_object.type == "Histo1D":
+            data_object.rebin(rebin_count, begin=rebin_begin)
+        else:
+            print "Will use incomplete implementation to rebin a scatter plot, with 0.0 as an incorrect placeholder for the y error"
+            x_coords = [point.x for point in data_object.points]
+            y_coords = get_scatter2d_y_coords(data_object)
+            x_errs = []
+            x_errs.append([point.xErrs[0] for point in data_object.points])
+            x_errs.append([point.xErrs[1] for point in data_object.points])
+            if not are_points_with_errors_adjacent(x_coords, x_errs):
+                raise Exception("Points must be adjacent for interpreting the scatter plots as a histogram")
+            new_points = data_object.points[0:rebin_begin]
+            i = 0
+            while (i + 1) * rebin_count < len(data_object.points) - rebin_begin: 
+                first_index = rebin_begin + i * rebin_count
+                points = data_object.points[first_index:first_index+rebin_count]
+                left_edge = points[0].x - points[0].xErrs[0]
+                right_edge = points[-1].x + points[-1].xErrs[1]
+                length = right_edge - left_edge
+                new_x = left_edge + length / 2.0
+                new_xerrs = length / 2.0
+                new_y = 0.0
+                for point in points:
+                    left_edge = point.x - point.xErrs[0]
+                    right_edge = point.x + point.xErrs[1]
+                    new_y += (right_edge - left_edge) * point.y
+                new_y /= length
+                new_points.append(yoda.Point2D(x=new_x, y=new_y, xerrs=new_xerrs, yerrs=0.0))
+                i = i + 1
+            new_points.extend(data_object.points[first_index+rebin_count:])
+            print data_object.points
+            print new_points
+            print data_object.path
+            print data_object.title
+            data_object = yoda.Scatter2D(path=data_object.path, title=data_object.title)
+            for point in new_points:
+                data_object.addPoint(point)
     if divide_by is not None:
         divide_by = resolve_data_object(divide_by, name)
         if data_object.type == "Histo1D" and divide_by.type == "Histo1D":

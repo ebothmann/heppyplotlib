@@ -64,8 +64,8 @@ def ratioplot_setup_axes(two_subplot_specs):
     """Returns a figure and two axes on it intended for main and diff plots."""
     axes_list = []
     axes_list.append(plt.subplot(two_subplot_specs[0]))
-    axes_list.append(plt.subplot(two_subplot_specs[1],
-                                 sharex=plt.subplot(two_subplot_specs[0])))
+    axes_list.append(plt.subplot(two_subplot_specs[1]))
+                                 # sharex=plt.subplot(two_subplot_specs[0])))
     layout_main_and_diff_axes(axes_list[0], axes_list[1])
     return axes_list
 

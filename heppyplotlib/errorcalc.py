@@ -3,7 +3,7 @@
 import math
 import numpy as np
 
-def combine(files, rivet_path, error_calc, rebin_count=None, rebin_counts=None):
+def combine(files, rivet_path, error_calc, rebin_count=None, rebin_counts=None, rebin_begin=0, ignore_missing_files=False):
     """Combine files[1]/rivet_path, files[2]/rivet_path, ...
     using an error_calc function from the heppyplotlib.error_calc
     module and return a YODA data object.
@@ -20,12 +20,18 @@ def combine(files, rivet_path, error_calc, rebin_count=None, rebin_counts=None):
     from . import yodaplot
     y_coord_list = []
     for file_name, rebin_count in zip(files, rebin_counts):
-        data_object = yodaplot.resolve_data_object(file_name, rivet_path, rebin_count=rebin_count)
-        y_coord_list.append(yodaplot.get_y_coords(data_object))
+        try:
+            data_object = yodaplot.resolve_data_object(file_name, rivet_path, rebin_count=rebin_count, rebin_begin=rebin_begin)
+            y_coord_list.append(yodaplot.get_y_coords(data_object))
+        except IOError:
+            if not ignore_missing_files:
+                raise
+            else:
+                print "Ignore missing file", file_name
     errs = error_calc(y_coord_list)
     # make sure we are dealing with a scatter object to have the correct notion of errors
     scatter = yoda.mkScatter(yodaplot.resolve_data_object(files[0],
-        rivet_path, rebin_count=rebin_counts[0]))
+        rivet_path, rebin_count=rebin_counts[0], rebin_begin=rebin_begin))
     for point, point_errs in zip(scatter.points, zip(*errs)):
         point.yErrs = point_errs
     return scatter
