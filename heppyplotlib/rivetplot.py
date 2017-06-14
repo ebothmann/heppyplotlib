@@ -33,8 +33,9 @@ def legend_location_kwargs(rivet_path):
         location_x = float(plot_info['LegendXPos'])
         location_y = float(plot_info['LegendYPos'])
         return {'bbox_to_anchor': (location_x, 1 - location_y), 'loc': 2}
-    except KeyError:
+    except (KeyError, TypeError):
         return {'loc': 'best'}
+
 
 def apply_plot_info(rivet_path, main=None, diff=None):
     """Applies Rivet plot information to a main axes and optionally to a diff axes."""
@@ -62,7 +63,7 @@ def apply_plot_info(rivet_path, main=None, diff=None):
     if diff is not None:
         try:
             diff.set_ylim(float(plot_info['RatioPlotYMin']), float(plot_info['RatioPlotYMax']))
-        except KeyError:
+        except (KeyError, TypeError):
             pass
 
 def set_labels(plot_info, upper, lower):
@@ -74,19 +75,19 @@ def set_labels(plot_info, upper, lower):
         try:
             setter(plot_info[key])
             requires_tex = True
-        except KeyError:
+        except (KeyError, TypeError):
             pass
     if requires_tex:
         configuration.use_tex(overwrite=False)
 
 def set_axis_limits(plot_info, upper, lower):
     """Sets axis limits from Rivet plot info."""
-    setters_lists = ((upper.set_xlim, lower.set_xlim), (plt.ylim, ))
+    setters_lists = ((upper.set_xlim, lower.set_xlim), (upper.set_ylim, ))
     for setters, min_key, max_key in zip(setters_lists, prepend_x_y('Min'), prepend_x_y('Max')):
         try:
             for setter in setters:
                 setter(float(plot_info[min_key]), float(plot_info[max_key]))
-        except KeyError:
+        except (KeyError, TypeError):
             pass
 
 def set_tick_locators(plot_info, upper, lower):
@@ -110,7 +111,7 @@ def set_tick_locators(plot_info, upper, lower):
                 locator = MaxNLocator(nbins=nticks + 1)
             for axis in axis_list:
                 axis().set_minor_locator(locator)
-        except KeyError:
+        except (KeyError, TypeError):
             pass
 
 def set_axis_scales(plot_info, upper, lower):
@@ -118,7 +119,7 @@ def set_axis_scales(plot_info, upper, lower):
     Note that Rivet has different defaults for x and y scales."""
     try:
         logy = bool(int(plot_info['LogY']))
-    except KeyError:
+    except (KeyError, TypeError):
         logy = True
     if logy:
         upper.set_yscale('log')
@@ -126,7 +127,7 @@ def set_axis_scales(plot_info, upper, lower):
         if int(plot_info['LogX']):
             upper.set_xscale('log')
             lower.set_xscale('log')
-    except KeyError:
+    except (KeyError, TypeError):
         pass
 
 def load_plot_info(rivet_path):
