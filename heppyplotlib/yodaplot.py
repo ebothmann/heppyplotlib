@@ -145,6 +145,10 @@ def plot_step_with_errorbar(lefts, widths, y_coords, y_errs,
             del rect_kwargs["marker"]
         except KeyError:
             pass
+        try:
+            del rect_kwargs["zorder"]
+        except KeyError:
+            pass
         zorder = plt.gca().lines[-1].get_zorder() - 1  # make sure it's drawn below
         errorrects_result = plot_errorrects(lefts, y_coords, y_errs, ecolor, zorder, **rect_kwargs)
         # x_mids = [left + width / 2.0 for left, width in zip(lefts[:-1], widths)]
