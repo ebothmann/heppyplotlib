@@ -60,27 +60,31 @@ def ratioplot(files_or_data_objects, rivet_path,
     return axes_list, grid
 
 
-def ratioplot_setup_axes(two_subplot_specs):
+def ratioplot_setup_axes(subplot_specs):
     """Returns a figure and two axes on it intended for main and diff plots."""
     axes_list = []
-    axes_list.append(plt.subplot(two_subplot_specs[0]))
-    axes_list.append(plt.subplot(two_subplot_specs[1],
-                                 sharex=plt.subplot(two_subplot_specs[0])))
-    layout_main_and_diff_axes(axes_list[0], axes_list[1])
+    axes_list.append(plt.subplot(subplot_specs[0]))
+    print 
+    for i in range(1, subplot_specs.get_geometry()[0]):
+        axes_list.append(plt.subplot(subplot_specs[i],
+                                     sharex=plt.subplot(subplot_specs[0])))
+    layout_main_and_diff_axes(axes_list[0], axes_list[1:])
     return axes_list
 
 
-def layout_main_and_diff_axes(main, diff):
-    """Improves layout of a main-and-diff-plot figure by making them
+def layout_main_and_diff_axes(main, diffs):
+    """Improves layout of a main-and-diffs-plot figure by making them
     adjacent."""
     # plt.gcf().subplots_adjust(hspace=0.0)
-    main.spines['bottom'].set_visible(False)
-    plt.setp(main.get_xticklabels(), visible=False)
-    main.set_xlabel('')
-    diff.xaxis.tick_bottom()
-    subplot_max_ticks = len(diff.get_yticklabels())
-    diff.yaxis.set_major_locator(MaxNLocator(nbins=subplot_max_ticks-1,
-                                             prune='upper'))
+    for axis in [main] + diffs[:-1]:
+        axis.spines['bottom'].set_visible(False)
+        plt.setp(axis.get_xticklabels(), visible=False)
+        axis.set_xlabel('')
+    diffs[-1].xaxis.tick_bottom()
+    for diff in diffs:
+        subplot_max_ticks = len(diffs[-1].get_yticklabels())
+        diffs[-1].yaxis.set_major_locator(MaxNLocator(nbins=subplot_max_ticks-1,
+                                                      prune='upper'))
 
 
 def plot_nominal(files_or_data_objects, rivet_path,
