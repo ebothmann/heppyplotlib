@@ -55,11 +55,15 @@ def plot(filename_or_data_object, rivet_path,
     else:
         errors_enabled = True if errors_enabled is None else errors_enabled
 
-    if uses_rivet_plot_info:
-        from . import rivetplot
-        rebin_count = rivetplot.rebin_count(rivet_path)
+    if "rebin_count" in kwargs:
+        rebin_count = kwargs["rebin_count"]
+        del kwargs["rebin_count"]
     else:
-        rebin_count = 1
+        if uses_rivet_plot_info:
+            from . import rivetplot
+            rebin_count = rivetplot.rebin_count(rivet_path)
+        else:
+            rebin_count = 1
 
     result = yodaplot.plot(filename_or_data_object, rivet_path,
                            errors_enabled=errors_enabled,
