@@ -56,5 +56,9 @@ setup(
     extras_require = {
             'Rivet':  ["rivet"],
             'YODA': ["yoda"],
+        },
+
+    entry_points = {
+            'console_scripts': ['hpl-plot=heppyplotlib.command_line:plot']
         }
 )
