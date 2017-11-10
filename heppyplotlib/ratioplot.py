@@ -55,7 +55,8 @@ def ratioplot(files_or_data_objects, rivet_path,
         from . import rivetplot
         rivetplot.apply_plot_info(rivet_path, axes_list[0], axes_list[1])
 
-    plt.ylabel(diff_ylabel)
+    if diff_ylabel is not None:
+        plt.ylabel(diff_ylabel)
 
     return axes_list, grid
 
@@ -64,7 +65,6 @@ def ratioplot_setup_axes(subplot_specs):
     """Returns a figure and two axes on it intended for main and diff plots."""
     axes_list = []
     axes_list.append(plt.subplot(subplot_specs[0]))
-    print 
     for i in range(1, subplot_specs.get_geometry()[0]):
         axes_list.append(plt.subplot(subplot_specs[i],
                                      sharex=plt.subplot(subplot_specs[0])))
