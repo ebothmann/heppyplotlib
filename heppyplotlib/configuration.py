@@ -48,7 +48,7 @@ def set_font_sizes(normal=9, small=8):
               'figure.titlesize': normal,
               'axes.titlesize': normal,
               'axes.labelsize': normal,
-              'legend.fontsize': normal,
+              'legend.fontsize': small,
               'xtick.labelsize': small,   # \thefontsize\footnotesize (like subcaptions)
               'ytick.labelsize': small}
     plt.rcParams.update(params)
