@@ -75,9 +75,6 @@ def plot_histo1d_bins(bins, errors_enabled=True, visible=True, **kwargs):
     else:
         result = plot_step_with_errorbar(x_lefts, widths, y_coord, y_errs,
                                          errors_enabled=errors_enabled, visible=visible, **kwargs)
-    # fix stupid automatic limits
-    margins = (0, 0)  # (width[0]/4.0, width[-1]/4.0)
-    plt.xlim(x_lefts[0] - margins[0], x_lefts[-1] + margins[1])
     return result
 
 def get_histo1d_y_coords(histo_or_bins):
@@ -177,16 +174,24 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1, **kwargs):
         return plt.fill_between(lefts, y_up, y_down,
                                 color='none',
                                 edgecolor=color,
+                                alpha=1.0,
                                 zorder=zorder, **kwargs)
     else:
         if 'linewidth' in kwargs:
-            del kwargs['linewidth']
-        if not 'alpha' in kwargs:
-            kwargs['alpha'] = 0.3
-        return plt.fill_between(lefts, y_up, y_down,
-                                color=color,
-                                linewidth=0.0,
-                                zorder=zorder, **kwargs)
+            up = plt.plot(lefts, y_up,
+                          color=color,
+                          zorder=zorder, **kwargs)
+            down = plt.plot(lefts, y_down,
+                            color=color,
+                            zorder=zorder, **kwargs)
+            return (up, down)
+        else:
+            if not 'alpha' in kwargs:
+                kwargs['alpha'] = 0.3
+            return plt.fill_between(lefts, y_up, y_down,
+                                    color=color,
+                                    linewidth=0.0,
+                                    zorder=zorder, **kwargs)
 
 def data_object_names(filename):
     """Retrieves all data object names from a YODA file."""
