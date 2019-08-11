@@ -11,10 +11,13 @@ from .plot import plot
 def ratioplot(files_or_data_objects, rivet_path,
               divide_by=0, uses_rivet_plot_info=True,
               errors_enabled=None,
-              axes_list=None, draws_legend=True,
+              axes_list=None,
+              draws_legend=True,
+              legend_fraction_of_figure=None,
               labels=None,
               styles=None,
               diff_ylabel=None,
+              n_ratio_plots=1,
               **kwargs):
     """Convenience function to plot data objects (directly passed or taken from
     files) into a nominal pane and a diff pane"""
@@ -25,7 +28,9 @@ def ratioplot(files_or_data_objects, rivet_path,
 
     if axes_list is None:
         plt.figure()
-        grid = gridspec.GridSpec(2, 1, height_ratios=[2, 1], hspace=0)
+        height_ratios = [2] + [1]*n_ratio_plots
+        right = None if legend_fraction_of_figure is None else 1-legend_fraction_of_figure
+        grid = gridspec.GridSpec(1 + n_ratio_plots, 1, right=right, height_ratios=height_ratios, hspace=0)
         axes_list = ratioplot_setup_axes(grid)
     else:
         grid = None
@@ -36,27 +41,32 @@ def ratioplot(files_or_data_objects, rivet_path,
                  errors_enabled=errors_enabled, **kwargs)
 
     if draws_legend:
+        if legend_fraction_of_figure is None:
+            if uses_rivet_plot_info:
+                from . import rivetplot
+                legend_loc_kwargs = rivetplot.legend_location_kwargs(rivet_path)
+            else:
+                legend_loc_kwargs = {'loc': 'best'}
+            plt.legend(**legend_loc_kwargs)
+        else:
+            handles, labels = axes_list[0].get_legend_handles_labels()
+            plt.gcf().legend(handles, labels, loc="center right")
+
+    for diff in axes_list[1:]:
+        plt.sca(diff)
+
+        if isinstance(divide_by, int):
+            divide_by = files_or_data_objects[divide_by]
+
+        plot_diff(files_or_data_objects, rivet_path, divide_by, styles=styles,
+                  errors_enabled=errors_enabled, **kwargs)
+
         if uses_rivet_plot_info:
             from . import rivetplot
-            legend_loc_kwargs = rivetplot.legend_location_kwargs(rivet_path)
-        else:
-            legend_loc_kwargs = {'loc': 'best'}
-        plt.legend(**legend_loc_kwargs)
+            rivetplot.apply_plot_info(rivet_path, axes_list[0], diff)
 
-    plt.sca(axes_list[1])
-
-    if isinstance(divide_by, int):
-        divide_by = files_or_data_objects[divide_by]
-
-    plot_diff(files_or_data_objects, rivet_path, divide_by, styles=styles,
-              errors_enabled=errors_enabled, **kwargs)
-
-    if uses_rivet_plot_info:
-        from . import rivetplot
-        rivetplot.apply_plot_info(rivet_path, axes_list[0], axes_list[1])
-
-    if diff_ylabel is not None:
-        plt.ylabel(diff_ylabel)
+        if diff_ylabel is not None:
+            plt.ylabel(diff_ylabel)
 
     return axes_list, grid
 
@@ -75,7 +85,6 @@ def ratioplot_setup_axes(subplot_specs):
 def layout_main_and_diff_axes(main, diffs):
     """Improves layout of a main-and-diffs-plot figure by making them
     adjacent."""
-    # plt.gcf().subplots_adjust(hspace=0.0)
     for axis in [main] + diffs[:-1]:
         axis.spines['bottom'].set_visible(False)
         plt.setp(axis.get_xticklabels(), visible=False)
