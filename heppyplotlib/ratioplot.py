@@ -28,7 +28,11 @@ def ratioplot(files_or_data_objects, rivet_path,
 
     if axes_list is None:
         plt.figure()
-        height_ratios = [2] + [1]*n_ratio_plots
+        if n_ratio_plots > 2:
+            nominal_height_ratio = 1
+        else:
+            nominal_height_ratio = 2
+        height_ratios = [nominal_height_ratio] + [1]*n_ratio_plots
         right = None if legend_fraction_of_figure is None else 1-legend_fraction_of_figure
         grid = gridspec.GridSpec(1 + n_ratio_plots, 1, right=right, height_ratios=height_ratios, hspace=0)
         axes_list = ratioplot_setup_axes(grid)
