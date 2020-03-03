@@ -18,6 +18,7 @@ def ratioplot(files_or_data_objects, rivet_path,
               styles=None,
               diff_ylabel=None,
               n_ratio_plots=1,
+              nominal_height_ratio=None,
               **kwargs):
     """Convenience function to plot data objects (directly passed or taken from
     files) into a nominal pane and a diff pane"""
@@ -28,10 +29,11 @@ def ratioplot(files_or_data_objects, rivet_path,
 
     if axes_list is None:
         plt.figure()
-        if n_ratio_plots > 2:
-            nominal_height_ratio = 1
-        else:
-            nominal_height_ratio = 2
+        if nominal_height_ratio is None:
+            if n_ratio_plots > 2:
+                nominal_height_ratio = 1
+            else:
+                nominal_height_ratio = 2
         height_ratios = [nominal_height_ratio] + [1]*n_ratio_plots
         right = None if legend_fraction_of_figure is None else 1-legend_fraction_of_figure
         grid = gridspec.GridSpec(1 + n_ratio_plots, 1, right=right, height_ratios=height_ratios, hspace=0)
