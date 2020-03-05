@@ -41,38 +41,40 @@ def ratioplot(files_or_data_objects, rivet_path,
     else:
         grid = None
 
-    plt.sca(axes_list[0])
-    plot_nominal(files_or_data_objects, rivet_path,
-                 labels=labels, styles=styles,
-                 errors_enabled=errors_enabled, **kwargs)
+    if axes_list[0] is not None:
+        plt.sca(axes_list[0])
+        plot_nominal(files_or_data_objects, rivet_path,
+                     labels=labels, styles=styles,
+                     errors_enabled=errors_enabled, **kwargs)
 
-    if draws_legend:
-        if legend_fraction_of_figure is None:
-            if uses_rivet_plot_info:
-                from . import rivetplot
-                legend_loc_kwargs = rivetplot.legend_location_kwargs(rivet_path)
+        if draws_legend:
+            if legend_fraction_of_figure is None:
+                if uses_rivet_plot_info:
+                    from . import rivetplot
+                    legend_loc_kwargs = rivetplot.legend_location_kwargs(rivet_path)
+                else:
+                    legend_loc_kwargs = {'loc': 'best'}
+                plt.legend(**legend_loc_kwargs)
             else:
-                legend_loc_kwargs = {'loc': 'best'}
-            plt.legend(**legend_loc_kwargs)
-        else:
-            handles, labels = axes_list[0].get_legend_handles_labels()
-            plt.gcf().legend(handles, labels, loc="center right")
+                handles, labels = axes_list[0].get_legend_handles_labels()
+                plt.gcf().legend(handles, labels, loc="center right")
 
     for diff in axes_list[1:]:
-        plt.sca(diff)
+        if diff is not None:
+            plt.sca(diff)
 
-        if isinstance(divide_by, int):
-            divide_by = files_or_data_objects[divide_by]
+            if isinstance(divide_by, int):
+                divide_by = files_or_data_objects[divide_by]
 
-        plot_diff(files_or_data_objects, rivet_path, divide_by, styles=styles,
-                  errors_enabled=errors_enabled, **kwargs)
+            plot_diff(files_or_data_objects, rivet_path, divide_by, styles=styles,
+                      errors_enabled=errors_enabled, **kwargs)
 
-        if uses_rivet_plot_info:
-            from . import rivetplot
-            rivetplot.apply_plot_info(rivet_path, axes_list[0], diff)
+            if uses_rivet_plot_info:
+                from . import rivetplot
+                rivetplot.apply_plot_info(rivet_path, axes_list[0], diff)
 
-        if diff_ylabel is not None:
-            plt.ylabel(diff_ylabel)
+            if diff_ylabel is not None:
+                plt.ylabel(diff_ylabel)
 
     return axes_list, grid
 
