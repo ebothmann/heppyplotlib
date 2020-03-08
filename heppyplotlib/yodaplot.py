@@ -199,7 +199,11 @@ def data_object_names(filename):
     return [key for key in data_objects.keys()
             if not data_objects[key].type in ('Counter', 'Scatter1D')]
 
-def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_count=1, rebin_begin=0):
+def resolve_data_object(filename_or_data_object, name,
+        divide_by=None,
+        use_correlated_division=False,
+        rebin_count=1,
+        rebin_begin=0):
     """Take passed data object or loads a data object from a YODA file,
     and return it after dividing by divide_by."""
     if isinstance(filename_or_data_object, basestring):
@@ -245,30 +249,21 @@ def resolve_data_object(filename_or_data_object, name, divide_by=None, rebin_cou
             for point in new_points:
                 data_object.addPoint(point)
     if divide_by is not None:
-        divide_by = resolve_data_object(divide_by, name)
-        if data_object.type == "Histo1D" and divide_by.type == "Histo1D":
-            data_object = data_object.divideBy(divide_by)
-        elif data_object.type == "Scatter2D" or divide_by.type == "Scatter2D":
-            # we make sure that also divide_by is a Scatter2D before using its points property
-            data_object = yoda.mkScatter(data_object)
-            for point, denominator_point in zip(data_object.points, yoda.mkScatter(divide_by).points):
-                if denominator_point.y == 0.0:
-                    new_y = 1.0
-                    new_y_errs = [0.0, 0.0]
-                else:
-                    new_y = point.y / denominator_point.y
+        data_object = yoda.mkScatter(data_object)
+        divide_by = resolve_data_object(divide_by, name).mkScatter()
+        for point, denominator_point in zip(data_object.points, divide_by.points):
+            if denominator_point.y == 0.0:
+                new_y = 1.0
+                new_y_errs = [0.0, 0.0]
+            else:
+                new_y = point.y / denominator_point.y
+                if use_correlated_division:
                     new_y_errs = [y_err / denominator_point.y for y_err in point.yErrs]
-                # if new_y == 1.0 and point.yErrs == denominator_point.yErrs:
-                #     # assume this is the same data set, so use the same relative error
-                    # if denominator_point.y == 0.0:
-                    #     new_y_errs = [0.0, 0.0]
-                    # else:
-                    #     new_y_errs = [y_err / denominator_point.y for y_err in denominator_point.yErrs]
-                # else:
-                #     # assume that we divide through an independent data set, use error propagation
-                #     rel_y_errs = [(y_err / point.y + den_y_err / denominator_point.y)
-                #                   for y_err, den_y_err in zip(point.yErrs, denominator_point.yErrs)]
-                #     new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
-                point.y = new_y
-                point.yErrs = new_y_errs
+                else:
+                    # assume that we divide through an independent data set, use error propagation
+                    rel_y_errs = [np.sqrt((y_err / point.y)**2 + (den_y_err / denominator_point.y)**2)
+                            for y_err, den_y_err in zip(point.yErrs, denominator_point.yErrs)]
+                    new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
+            point.y = new_y
+            point.yErrs = new_y_errs
     return data_object
