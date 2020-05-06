@@ -250,20 +250,32 @@ def resolve_data_object(filename_or_data_object, name,
                 data_object.addPoint(point)
     if divide_by is not None:
         data_object = yoda.mkScatter(data_object)
-        divide_by = resolve_data_object(divide_by, name).mkScatter()
-        for point, denominator_point in zip(data_object.points, divide_by.points):
-            if denominator_point.y == 0.0:
-                new_y = 1.0
-                new_y_errs = [0.0, 0.0]
-            else:
-                new_y = point.y / denominator_point.y
-                if use_correlated_division:
-                    new_y_errs = [y_err / denominator_point.y for y_err in point.yErrs]
+        if isinstance(divide_by, float):
+            for point in data_object.points:
+                new_y = point.y / divide_by
+                new_y_errs = [y_err / divide_by for y_err in point.yErrs]
+                point.y = new_y
+                point.yErrs = new_y_errs
+        else:
+            divide_by = resolve_data_object(divide_by, name).mkScatter()
+            for point, denominator_point in zip(data_object.points, divide_by.points):
+                if denominator_point.y == 0.0:
+                    new_y = 1.0
+                    new_y_errs = [0.0, 0.0]
                 else:
-                    # assume that we divide through an independent data set, use error propagation
-                    rel_y_errs = [np.sqrt((y_err / point.y)**2 + (den_y_err / denominator_point.y)**2)
-                            for y_err, den_y_err in zip(point.yErrs, denominator_point.yErrs)]
-                    new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
-            point.y = new_y
-            point.yErrs = new_y_errs
+                    new_y = point.y / denominator_point.y
+                    if use_correlated_division:
+                        new_y_errs = [y_err / denominator_point.y for y_err in point.yErrs]
+                    else:
+                        # assume that we divide through an independent data set, use error propagation
+                        rel_y_errs = []
+                        for y_err, den_y_err in zip(point.yErrs, denominator_point.yErrs):
+                            err2 = 0.0
+                            if point.y != 0.0:
+                                err2 += (y_err / point.y)**2
+                            err2 += (den_y_err / denominator_point.y)**2
+                            rel_y_errs.append(np.sqrt(err2))
+                        new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
+                point.y = new_y
+                point.yErrs = new_y_errs
     return data_object
