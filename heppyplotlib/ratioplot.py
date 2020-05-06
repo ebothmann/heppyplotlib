@@ -20,7 +20,9 @@ def ratioplot(files_or_data_objects, rivet_path,
               styles=None,
               diff_ylabel=None,
               n_ratio_plots=1,
+              n_columns=1,
               nominal_height_ratio=None,
+              squeeze=True,
               **kwargs):
     """Convenience function to plot data objects (directly passed or taken from
     files) into a nominal pane and a diff pane"""
@@ -38,63 +40,80 @@ def ratioplot(files_or_data_objects, rivet_path,
                 nominal_height_ratio = 2
         height_ratios = [nominal_height_ratio] + [1]*n_ratio_plots
         right = None if legend_fraction_of_figure is None else 1-legend_fraction_of_figure
-        grid = gridspec.GridSpec(1 + n_ratio_plots, 1, right=right, height_ratios=height_ratios, hspace=0)
-        axes_list = ratioplot_setup_axes(grid)
+        wspace = None if n_columns == 1 else 0.4
+        grid = gridspec.GridSpec(1 + n_ratio_plots, n_columns,
+                height_ratios=height_ratios, right=right, hspace=0, wspace=wspace)
+        axes_column_list = ratioplot_setup_axes(grid)
     else:
         grid = None
 
-    if axes_list[0] is not None:
-        plt.sca(axes_list[0])
-        plot_nominal(files_or_data_objects, rivet_path,
-                     labels=labels, styles=styles,
-                     errors_enabled=errors_enabled, **kwargs)
+    for i, axes_list in enumerate(axes_column_list):
 
-        if draws_legend:
-            if legend_fraction_of_figure is None:
-                if uses_rivet_plot_info:
-                    from . import rivetplot
-                    legend_loc_kwargs = rivetplot.legend_location_kwargs(rivet_path)
+        if axes_list[0] is not None:
+            plt.sca(axes_list[0])
+            plot_nominal(files_or_data_objects, rivet_path,
+                         labels=labels, styles=styles,
+                         errors_enabled=errors_enabled, **kwargs)
+
+            if draws_legend and len(files_or_data_objects) > 1:
+                if legend_fraction_of_figure is None:
+                    if uses_rivet_plot_info:
+                        from . import rivetplot
+                        legend_loc_kwargs = rivetplot.legend_location_kwargs(rivet_path)
+                    else:
+                        legend_loc_kwargs = {'loc': 'best'}
+                    plt.legend(**legend_loc_kwargs)
                 else:
-                    legend_loc_kwargs = {'loc': 'best'}
-                plt.legend(**legend_loc_kwargs)
-            else:
-                handles, labels = axes_list[0].get_legend_handles_labels()
-                plt.gcf().legend(handles, labels, loc="center right")
+                    handles, labels = axes_list[0].get_legend_handles_labels()
+                    plt.gcf().legend(handles, labels, loc="center right")
 
-    if isinstance(divide_by, int):
-        if not use_correlated_division:
-            use_correlated_division = divide_by
-        divide_by = files_or_data_objects[divide_by]
+        if isinstance(divide_by, int):
+            if not use_correlated_division:
+                use_correlated_division = divide_by
+            divide_by = files_or_data_objects[divide_by]
 
-    for diff in axes_list[1:]:
-        if diff is not None:
-            plt.sca(diff)
+        for diff in axes_list[1:]:
+            if diff is not None:
+                plt.sca(diff)
 
-            plot_diff(files_or_data_objects, rivet_path, divide_by,
-                    use_correlated_division=use_correlated_division,
-                    styles=styles,
-                    errors_enabled=errors_enabled,
-                    **kwargs)
+                plot_diff(files_or_data_objects, rivet_path, divide_by,
+                        use_correlated_division=use_correlated_division,
+                        styles=styles,
+                        errors_enabled=errors_enabled,
+                        **kwargs)
 
-            if uses_rivet_plot_info:
-                from . import rivetplot
-                rivetplot.apply_plot_info(rivet_path, axes_list[0], diff)
+                if i == 0 and uses_rivet_plot_info:
+                    from . import rivetplot
+                    rivetplot.apply_plot_info(rivet_path, axes_list[0], diff)
 
-            if diff_ylabel is not None:
-                plt.ylabel(diff_ylabel)
+                if i == 0 and diff_ylabel is not None:
+                    plt.ylabel(diff_ylabel)
 
-    return axes_list, grid
+    if n_columns == 1 and squeeze:
+        return axes_list, grid
+    else:
+        return axes_column_list, grid
 
 
 def ratioplot_setup_axes(subplot_specs):
     """Returns a figure and two axes on it intended for main and diff plots."""
-    axes_list = []
-    axes_list.append(plt.subplot(subplot_specs[0]))
-    for i in range(1, subplot_specs.get_geometry()[0]):
-        axes_list.append(plt.subplot(subplot_specs[i],
-                                     sharex=plt.subplot(subplot_specs[0])))
-    layout_main_and_diff_axes(axes_list[0], axes_list[1:])
-    return axes_list
+    axes_column_list = []
+    nrows = subplot_specs.get_geometry()[0]
+    ncols = subplot_specs.get_geometry()[1]
+    for j in range(0, ncols):
+        axes_list = []
+        kwargs = {}
+        if not j == 0:
+            kwargs["sharey"] = axes_column_list[0][0]
+        axes_list.append(plt.subplot(subplot_specs[j], **kwargs))
+        for i in range(1, nrows):
+            kwargs = {"sharex": plt.subplot(subplot_specs[0])}
+            #if not j == 0:
+            #    kwargs["sharey"] = axes_column_list[0][i]
+            axes_list.append(plt.subplot(subplot_specs[i*ncols + j], **kwargs))
+        layout_main_and_diff_axes(axes_list[0], axes_list[1:])
+        axes_column_list.append(axes_list)
+    return axes_column_list
 
 
 def layout_main_and_diff_axes(main, diffs):
