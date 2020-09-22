@@ -44,7 +44,7 @@ def plot(filename_or_data_object, rivet_path,
     from . import yodaplot
 
     print("Plotting", rivet_path, end="")
-    if isinstance(filename_or_data_object, basestring):
+    if isinstance(filename_or_data_object, str):
         print(" from", filename_or_data_object, "...")
     else:
         print()

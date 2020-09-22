@@ -27,7 +27,7 @@ def combine(files, rivet_path, error_calc, rebin_count=None, rebin_counts=None, 
             if not ignore_missing_files:
                 raise
             else:
-                print "Ignore missing file", file_name
+                print("Ignore missing file", file_name)
     errs = error_calc(y_coord_list)
     # make sure we are dealing with a scatter object to have the correct notion of errors
     scatter = yoda.mkScatter(yodaplot.resolve_data_object(files[0],

@@ -163,10 +163,11 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1, **kwargs):
                 raise Exception("There are less y errors than points.")
     except TypeError:
         pass
-    lefts = np.ravel(zip(lefts[:-1], lefts[1:]))
+    lefts = np.ravel(list(zip(lefts[:-1], lefts[1:])))
     try:
-        y_down = np.ravel([[y - y_err[0]] * 2 for y, y_err in zip(y_coords, y_errs)])
-        y_up = np.ravel([[y + y_err[1]] * 2 for y, y_err in zip(y_coords, y_errs)])
+        coords_and_errs = list(zip(y_coords, y_errs))
+        y_down = np.ravel([[y - y_err[1]] * 2 for y, y_err in coords_and_errs])
+        y_up   = np.ravel([[y + y_err[0]] * 2 for y, y_err in coords_and_errs])
     except TypeError:
         y_down = np.ravel([[y - y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
         y_up = np.ravel([[y + y_err] * 2 for y, y_err in zip(y_coords, y_errs)])
@@ -188,10 +189,10 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1, **kwargs):
         else:
             if not 'alpha' in kwargs:
                 kwargs['alpha'] = 0.3
-            return plt.fill_between(lefts, y_up, y_down,
-                                    color=color,
+            return plt.fill_between(list(lefts), list(y_up), list(y_down),
+                                    color=list(color),
                                     linewidth=0.0,
-                                    zorder=zorder, **kwargs)
+                                    zorder=int(zorder), **kwargs)
 
 def data_object_names(filename):
     """Retrieves all data object names from a YODA file."""
@@ -201,12 +202,13 @@ def data_object_names(filename):
 
 def resolve_data_object(filename_or_data_object, name,
         divide_by=None,
+        multiply_by=None,
         use_correlated_division=False,
         rebin_count=1,
         rebin_begin=0):
     """Take passed data object or loads a data object from a YODA file,
-    and return it after dividing by divide_by."""
-    if isinstance(filename_or_data_object, basestring):
+    and return it after dividing (or multiplying) by divide_by (multiply_by)."""
+    if isinstance(filename_or_data_object, str):
         data_object = yoda.readYODA(filename_or_data_object)[name]
     else:
         data_object = filename_or_data_object.clone()
@@ -214,7 +216,7 @@ def resolve_data_object(filename_or_data_object, name,
         if data_object.type == "Histo1D":
             data_object.rebin(rebin_count, begin=rebin_begin)
         else:
-            print "Will use incomplete implementation to rebin a scatter plot, with 0.0 as an incorrect placeholder for the y error"
+            print("Will use incomplete implementation to rebin a scatter plot, with 0.0 as an incorrect placeholder for the y error")
             x_coords = [point.x for point in data_object.points]
             y_coords = get_scatter2d_y_coords(data_object)
             x_errs = []
@@ -241,39 +243,50 @@ def resolve_data_object(filename_or_data_object, name,
                 new_points.append(yoda.Point2D(x=new_x, y=new_y, xerrs=new_xerrs, yerrs=0.0))
                 i = i + 1
             new_points.extend(data_object.points[first_index+rebin_count:])
-            print data_object.points
-            print new_points
-            print data_object.path
-            print data_object.title
             data_object = yoda.Scatter2D(path=data_object.path, title=data_object.title)
             for point in new_points:
                 data_object.addPoint(point)
-    if divide_by is not None:
+    if divide_by is not None or multiply_by is not None:
         data_object = yoda.mkScatter(data_object)
-        if isinstance(divide_by, float):
+        if isinstance(divide_by, float) or isinstance(multiply_by, float):
             for point in data_object.points:
-                new_y = point.y / divide_by
-                new_y_errs = [y_err / divide_by for y_err in point.yErrs]
+                if divide_by is not None:
+                    new_y = point.y / divide_by
+                    new_y_errs = [y_err / divide_by for y_err in point.yErrs]
+                else:
+                    new_y = point.y * multiply_by
+                    new_y_errs = [y_err * multiply_by for y_err in point.yErrs]
                 point.y = new_y
                 point.yErrs = new_y_errs
         else:
-            divide_by = resolve_data_object(divide_by, name).mkScatter()
-            for point, denominator_point in zip(data_object.points, divide_by.points):
-                if denominator_point.y == 0.0:
-                    new_y = 1.0
+            if divide_by is not None:
+                operand = resolve_data_object(divide_by, name).mkScatter()
+            else:
+                operand = resolve_data_object(multiply_by, name).mkScatter()
+            for point, operand_point in zip(data_object.points, operand.points):
+                if operand_point.y == 0.0:
+                    if divide_by is not None:
+                        new_y = 1.0
+                    else:
+                        new_y = 0.0
                     new_y_errs = [0.0, 0.0]
                 else:
-                    new_y = point.y / denominator_point.y
-                    if use_correlated_division:
-                        new_y_errs = [y_err / denominator_point.y for y_err in point.yErrs]
+                    if divide_by is not None:
+                        new_y = point.y / operand_point.y
+                        if use_correlated_division:
+                            new_y_errs = [y_err / operand_point.y for y_err in point.yErrs]
                     else:
-                        # assume that we divide through an independent data set, use error propagation
+                        new_y = point.y * operand_point.y
+                        if use_correlated_division:
+                            new_y_errs = [y_err * operand_point.y for y_err in point.yErrs]
+                    if not use_correlated_division:
+                        # assume that we divide/multiply through an independent data set, use error propagation
                         rel_y_errs = []
-                        for y_err, den_y_err in zip(point.yErrs, denominator_point.yErrs):
+                        for y_err, operand_y_err in zip(point.yErrs, operand_point.yErrs):
                             err2 = 0.0
                             if point.y != 0.0:
                                 err2 += (y_err / point.y)**2
-                            err2 += (den_y_err / denominator_point.y)**2
+                            err2 += (operand_y_err / operand_point.y)**2
                             rel_y_errs.append(np.sqrt(err2))
                         new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
                 point.y = new_y

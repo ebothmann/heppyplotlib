@@ -6,10 +6,10 @@ def use_tex(use_serif=True, overwrite=True, preamble=None):
     """Configure pyplot to use LaTeX for text rendering."""
 
     if plt.rcParams['text.usetex'] and not overwrite:
-        print "Will not override tex settings ..."
+        print("Will not override tex settings ...")
         return
 
-    print "Will use tex for rendering ..."
+    print("Will use tex for rendering ...")
 
     if preamble is None:
         if use_serif:

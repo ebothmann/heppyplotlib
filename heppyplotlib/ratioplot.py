@@ -28,7 +28,7 @@ def ratioplot(files_or_data_objects, rivet_path,
     files) into a nominal pane and a diff pane"""
 
     # we do not want to iterate characters, so wrap a passed string in a list
-    if isinstance(files_or_data_objects, basestring):
+    if isinstance(files_or_data_objects, str):
         files_or_data_objects = [files_or_data_objects]
 
     if axes_list is None:

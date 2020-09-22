@@ -40,7 +40,7 @@ def legend_location_kwargs(rivet_path):
 def apply_plot_info(rivet_path, main=None, diff=None):
     """Applies Rivet plot information to a main axes and optionally to a diff axes."""
     plot_info = load_plot_info(rivet_path)
-    print "Rivet plot info:"
+    print("Rivet plot info:")
     pprint(plot_info)
 
     # normalize main argument
@@ -96,7 +96,7 @@ def set_tick_locators(plot_info, upper, lower):
     # NOTE: It's not clear to me how MajorTickMarks is supposed to work
     # for axis_list, key in zip(axis_lists, prepend_x_y('MajorTickMarks')):
     #     try:
-    #         print int(plot_info[key])
+    #         print(int(plot_info[key]))
     #         locator = MultipleLocator(int(plot_info[key]))
     #         for axis in axis_list:
     #             axis().set_major_locator(locator)
@@ -134,7 +134,7 @@ def load_plot_info(rivet_path):
     """Loads Rivet plot information."""
     plot_parser = rivet.mkStdPlotParser()
     if 'MCgrid_' == rivet_path[1:8]:
-        print "Stripping prefix 'MCgrid_' from rivet path when loading plot info"
+        print("Stripping prefix 'MCgrid_' from rivet path when loading plot info")
         rivet_path = '/' + rivet_path[8:]
     return plot_parser.getHeaders(rivet_path)
 
