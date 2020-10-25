@@ -203,11 +203,16 @@ def data_object_names(filename):
 def resolve_data_object(filename_or_data_object, name,
         divide_by=None,
         multiply_by=None,
-        use_correlated_division=False,
+        subtract_by=None,
+        assume_correlated=False,
+        use_correlated_division=None,  # this is only for backwards-compatibility
         rebin_count=1,
         rebin_begin=0):
     """Take passed data object or loads a data object from a YODA file,
     and return it after dividing (or multiplying) by divide_by (multiply_by)."""
+    if use_correlated_division is not None:
+        assume_correlated = use_correlated_division
+        print("Heppyplotlib deprecation warning: Use assume_correlated instead of use_correlated_division")
     if isinstance(filename_or_data_object, str):
         data_object = yoda.readYODA(filename_or_data_object)[name]
     else:
@@ -246,6 +251,24 @@ def resolve_data_object(filename_or_data_object, name,
             data_object = yoda.Scatter2D(path=data_object.path, title=data_object.title)
             for point in new_points:
                 data_object.addPoint(point)
+    if subtract_by is not None:
+        data_object = yoda.mkScatter(data_object)
+        operand = resolve_data_object(subtract_by, name).mkScatter()
+        for point, operand_point in zip(data_object.points, operand.points):
+            new_y = point.y - operand_point.y
+            if assume_correlated:
+                new_y_errs = [y_err - operand_point.y for y_err in point.yErrs]
+            if not assume_correlated:
+                # assume that we subtract an independent data set, use error propagation
+                new_y_errs = []
+                for y_err, operand_y_err in zip(point.yErrs, operand_point.yErrs):
+                    err2 = 0.0
+                    if point.y != 0.0:
+                        err2 += (y_err)**2
+                    err2 += (operand_y_err)**2
+                    new_y_errs.append(np.sqrt(err2))
+            point.y = new_y
+            point.yErrs = new_y_errs
     if divide_by is not None or multiply_by is not None:
         data_object = yoda.mkScatter(data_object)
         if isinstance(divide_by, float) or isinstance(multiply_by, float):
@@ -273,13 +296,13 @@ def resolve_data_object(filename_or_data_object, name,
                 else:
                     if divide_by is not None:
                         new_y = point.y / operand_point.y
-                        if use_correlated_division:
+                        if assume_correlated:
                             new_y_errs = [y_err / operand_point.y for y_err in point.yErrs]
                     else:
                         new_y = point.y * operand_point.y
-                        if use_correlated_division:
+                        if assume_correlated:
                             new_y_errs = [y_err * operand_point.y for y_err in point.yErrs]
-                    if not use_correlated_division:
+                    if not assume_correlated:
                         # assume that we divide/multiply through an independent data set, use error propagation
                         rel_y_errs = []
                         for y_err, operand_y_err in zip(point.yErrs, operand_point.yErrs):
