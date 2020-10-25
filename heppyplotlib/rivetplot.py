@@ -73,7 +73,9 @@ def set_labels(plot_info, upper, lower):
                       'XLabel': lower.set_xlabel, 'YLabel': upper.set_ylabel}
     for key, setter in string_setters.items():
         try:
-            setter(plot_info[key])
+            label = plot_info[key]
+            label = label.replace(r'\text', r'\mathrm')
+            setter(label)
             requires_tex = True
         except (KeyError, TypeError):
             pass
