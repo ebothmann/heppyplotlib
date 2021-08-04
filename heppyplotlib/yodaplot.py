@@ -219,7 +219,7 @@ def resolve_data_object(filename_or_data_object, name,
         if data_object.type == "Histo1D":
             data_object.rebin(rebin_count, begin=rebin_begin)
         else:
-            print "Will use incomplete implementation to rebin a scatter plot, with 0.0 as an incorrect placeholder for the y error"
+            print "WARNING: Will assume statistical errors for rebinning a scatter plot"
             x_coords = [point.x for point in data_object.points]
             y_coords = get_scatter2d_y_coords(data_object)
             x_errs = []
@@ -229,7 +229,7 @@ def resolve_data_object(filename_or_data_object, name,
                 raise Exception("Points must be adjacent for interpreting the scatter plots as a histogram")
             new_points = data_object.points[0:rebin_begin]
             i = 0
-            while (i + 1) * rebin_count < len(data_object.points) - rebin_begin: 
+            while (i + 1) * rebin_count <= len(data_object.points) - rebin_begin:
                 first_index = rebin_begin + i * rebin_count
                 points = data_object.points[first_index:first_index+rebin_count]
                 left_edge = points[0].x - points[0].xErrs[0]
@@ -238,12 +238,15 @@ def resolve_data_object(filename_or_data_object, name,
                 new_x = left_edge + length / 2.0
                 new_xerrs = length / 2.0
                 new_y = 0.0
+                new_yerrs = np.array([0.0, 0.0])
                 for point in points:
                     left_edge = point.x - point.xErrs[0]
                     right_edge = point.x + point.xErrs[1]
                     new_y += (right_edge - left_edge) * point.y
+                    new_yerrs += ((right_edge - left_edge) * np.array(point.yErrs))**2
                 new_y /= length
-                new_points.append(yoda.Point2D(x=new_x, y=new_y, xerrs=new_xerrs, yerrs=0.0))
+                new_yerrs = np.sqrt(new_yerrs) / length
+                new_points.append(yoda.Point2D(x=new_x, y=new_y, xerrs=new_xerrs, yerrs=new_yerrs))
                 i = i + 1
             new_points.extend(data_object.points[first_index+rebin_count:])
             data_object = yoda.Scatter2D(path=data_object.path, title=data_object.title)
