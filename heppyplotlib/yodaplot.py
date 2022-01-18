@@ -231,9 +231,10 @@ def resolve_data_object(filename_or_data_object, name,
                 raise Exception("Points must be adjacent for interpreting the scatter plots as a histogram")
             new_points = data_object.points[0:rebin_begin]
             i = 0
-            while (i + 1) * rebin_count <= len(data_object.points) - rebin_begin:
+            while rebin_begin + i * rebin_count < len(data_object.points) - 1:
                 first_index = rebin_begin + i * rebin_count
-                points = data_object.points[first_index:first_index+rebin_count]
+                last_index = min(first_index + rebin_count, len(data_object.points))
+                points = data_object.points[first_index:last_index]
                 left_edge = points[0].x - points[0].xErrs[0]
                 right_edge = points[-1].x + points[-1].xErrs[1]
                 length = right_edge - left_edge
@@ -250,7 +251,6 @@ def resolve_data_object(filename_or_data_object, name,
                 new_yerrs = np.sqrt(new_yerrs) / length
                 new_points.append(yoda.Point2D(x=new_x, y=new_y, xerrs=new_xerrs, yerrs=new_yerrs))
                 i = i + 1
-            new_points.extend(data_object.points[first_index+rebin_count:])
             data_object = yoda.Scatter2D(path=data_object.path, title=data_object.title)
             for point in new_points:
                 data_object.addPoint(point)
