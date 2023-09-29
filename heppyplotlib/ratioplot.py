@@ -116,18 +116,17 @@ def ratioplot_setup_axes(subplot_specs):
     return axes_column_list
 
 
-def layout_main_and_diff_axes(main, diffs):
-    """Improves layout of a main-and-diffs-plot figure by making them
-    adjacent."""
-    for axis in [main] + diffs[:-1]:
+def layout_axes_column(axes):
+    """Improves layout of a axes columns that are adjacent."""
+    for axis in axes[:-1]:
         axis.spines['bottom'].set_visible(False)
         plt.setp(axis.get_xticklabels(), visible=False)
         axis.set_xlabel('')
-    diffs[-1].xaxis.tick_bottom()
-    for diff in diffs:
-        subplot_max_ticks = len(diffs[-1].get_yticklabels())
-        diffs[-1].yaxis.set_major_locator(MaxNLocator(nbins=subplot_max_ticks-1,
-                                                      prune='upper'))
+    axes[-1].xaxis.tick_bottom()
+    for axis in axes[1:]:
+        subplot_max_ticks = len(axes[-1].get_yticklabels())
+        axis.yaxis.set_major_locator(MaxNLocator(nbins=subplot_max_ticks-1,
+                                                 prune='upper'))
 
 
 def plot_nominal(files_or_data_objects, rivet_path,
