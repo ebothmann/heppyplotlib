@@ -10,6 +10,7 @@ from .plot import plot
 
 def ratioplot(files_or_data_objects, rivet_path,
               divide_by=0,
+              deviate_from=None,
               assume_correlated=False,
               uses_rivet_plot_info=True,
               errors_enabled=None,
@@ -26,6 +27,10 @@ def ratioplot(files_or_data_objects, rivet_path,
               **kwargs):
     """Convenience function to plot data objects (directly passed or taken from
     files) into a nominal pane and a diff pane"""
+
+    # if the user uses deviate_from, we ignore the default divide_by=0
+    if deviate_from is not None:
+        divide_by = None
 
     # we do not want to iterate characters, so wrap a passed string in a list
     if isinstance(files_or_data_objects, str):
@@ -72,12 +77,15 @@ def ratioplot(files_or_data_objects, rivet_path,
             if not assume_correlated:
                 assume_correlated = divide_by
             divide_by = files_or_data_objects[divide_by]
+        elif isinstance(deviate_from, int):
+            deviate_from = files_or_data_objects[deviate_from]
 
         for diff in axes_list[1:]:
             if diff is not None:
                 plt.sca(diff)
 
-                plot_diff(files_or_data_objects, rivet_path, divide_by,
+                plot_diff(files_or_data_objects, rivet_path,
+                          divide_by, deviate_from,
                           assume_correlated=assume_correlated,
                           styles=styles,
                           errors_enabled=errors_enabled,
@@ -152,19 +160,23 @@ def plot_nominal(files_or_data_objects, rivet_path,
              **local_kwargs)
 
 
-def plot_diff(files_or_data_objects, rivet_path, divide_by, assume_correlated="all", styles=None, errors_enabled=None, **kwargs):
+def plot_diff(files_or_data_objects, rivet_path, divide_by, deviate_from, assume_correlated="all", styles=None, errors_enabled=None, **kwargs):
     """Populate the lower (diff) pane of a ratio plot."""
     from . import yodaplot
     for i, filename_or_data_object in enumerate(files_or_data_objects):
-        if isinstance(assume_correlated, int) and assume_correlated == i:
+        if isinstance(assume_correlated, bool):
+            assume_correlated_i = assume_correlated
+        elif isinstance(assume_correlated, int) and assume_correlated == i:
             assume_correlated_i = True
         elif isinstance(assume_correlated, str) and assume_correlated == "all":
             assume_correlated_i = True
         else:
             assume_correlated_i = assume_correlated
+        print(assume_correlated_i)
         data_object = yodaplot.resolve_data_object(filename_or_data_object,
                                                    rivet_path,
                                                    divide_by=divide_by,
+                                                   deviate_from=deviate_from,
                                                    assume_correlated=assume_correlated_i)
         local_kwargs = dict(kwargs)
         if styles is not None:
@@ -173,3 +185,5 @@ def plot_diff(files_or_data_objects, rivet_path, divide_by, assume_correlated="a
              uses_rivet_plot_info=False,
              errors_enabled=errors_enabled,
              **local_kwargs)
+        if deviate_from is not None:
+            plt.gca().set_ylim(-5, 5)

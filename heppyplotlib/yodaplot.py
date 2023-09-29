@@ -204,6 +204,7 @@ def resolve_data_object(filename_or_data_object, name,
         divide_by=None,
         multiply_by=None,
         subtract_by=None,
+        deviate_from=None,
         assume_correlated=False,
         rebin_count=1,
         rebin_begin=0):
@@ -313,4 +314,26 @@ def resolve_data_object(filename_or_data_object, name,
                         new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
                 point.setY(new_y)
                 point.setYErrs(new_y_errs)
+    if deviate_from is not None:
+        if assume_correlated:
+            raise Exception("You can not use assume_correlated and deviate_from at the same time.")
+        data_object = yoda.mkScatter(data_object)
+        operand = resolve_data_object(deviate_from, name).mkScatter()
+        is_equal = True
+        for point, operand_point in zip(data_object.points(), operand.points()):
+            new_y = point.y() - operand_point.y()
+            if new_y != 0.0:
+                is_equal = False
+            new_y_errs = []
+            for y_err, operand_y_err in zip(point.yErrs(), operand_point.yErrs()):
+                err2 = 0.0
+                err2 += (y_err)**2
+                err2 += (operand_y_err)**2
+                new_y_errs.append(np.sqrt(err2))
+            new_y /= new_y_errs[0]
+            point.setY(new_y)
+            point.setYErrs(0)
+        if is_equal:
+            for point in data_object.points():
+                point.setYErrs(1)
     return data_object
