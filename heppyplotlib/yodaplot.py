@@ -190,7 +190,7 @@ def plot_errorrects(lefts, y_coords, y_errs, color, zorder=1, **kwargs):
             if not 'alpha' in kwargs:
                 kwargs['alpha'] = 0.3
             return plt.fill_between(list(lefts), list(y_up), list(y_down),
-                                    color=list(color),
+                                    color=[color],
                                     linewidth=0.0,
                                     zorder=int(zorder), **kwargs)
 
