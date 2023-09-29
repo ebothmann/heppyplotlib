@@ -205,14 +205,10 @@ def resolve_data_object(filename_or_data_object, name,
         multiply_by=None,
         subtract_by=None,
         assume_correlated=False,
-        use_correlated_division=None,  # this is only for backwards-compatibility
         rebin_count=1,
         rebin_begin=0):
     """Take passed data object or loads a data object from a YODA file,
     and return it after dividing (or multiplying) by divide_by (multiply_by)."""
-    if use_correlated_division is not None:
-        assume_correlated = use_correlated_division
-        print("Heppyplotlib deprecation warning: Use assume_correlated instead of use_correlated_division")
     if isinstance(filename_or_data_object, str):
         data_object = yoda.readYODA(filename_or_data_object)[name]
     else:

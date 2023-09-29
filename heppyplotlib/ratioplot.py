@@ -10,7 +10,7 @@ from .plot import plot
 
 def ratioplot(files_or_data_objects, rivet_path,
               divide_by=0,
-              use_correlated_division=True,
+              assume_correlated=False,
               uses_rivet_plot_info=True,
               errors_enabled=None,
               axes_list=None,
@@ -68,8 +68,8 @@ def ratioplot(files_or_data_objects, rivet_path,
                     plt.gcf().legend(handles, labels, loc="center right")
 
         if isinstance(divide_by, int):
-            if not use_correlated_division:
-                use_correlated_division = divide_by
+            if not assume_correlated:
+                assume_correlated = divide_by
             divide_by = files_or_data_objects[divide_by]
 
         for diff in axes_list[1:]:
@@ -77,10 +77,10 @@ def ratioplot(files_or_data_objects, rivet_path,
                 plt.sca(diff)
 
                 plot_diff(files_or_data_objects, rivet_path, divide_by,
-                        use_correlated_division=use_correlated_division,
-                        styles=styles,
-                        errors_enabled=errors_enabled,
-                        **kwargs)
+                          assume_correlated=assume_correlated,
+                          styles=styles,
+                          errors_enabled=errors_enabled,
+                          **kwargs)
 
                 if i == 0 and uses_rivet_plot_info:
                     from . import rivetplot
@@ -152,20 +152,20 @@ def plot_nominal(files_or_data_objects, rivet_path,
              **local_kwargs)
 
 
-def plot_diff(files_or_data_objects, rivet_path, divide_by, use_correlated_division="all", styles=None, errors_enabled=None, **kwargs):
+def plot_diff(files_or_data_objects, rivet_path, divide_by, assume_correlated="all", styles=None, errors_enabled=None, **kwargs):
     """Populate the lower (diff) pane of a ratio plot."""
     from . import yodaplot
     for i, filename_or_data_object in enumerate(files_or_data_objects):
-        if isinstance(use_correlated_division, int) and use_correlated_division == i:
-            use_correlated_division_i = True
-        elif isinstance(use_correlated_division, str) and use_correlated_division == "all":
-            use_correlated_division_i = True
+        if isinstance(assume_correlated, int) and assume_correlated == i:
+            assume_correlated_i = True
+        elif isinstance(assume_correlated, str) and assume_correlated == "all":
+            assume_correlated_i = True
         else:
-            use_correlated_division_i = use_correlated_division
+            assume_correlated_i = assume_correlated
         data_object = yodaplot.resolve_data_object(filename_or_data_object,
                                                    rivet_path,
                                                    divide_by=divide_by,
-                                                   use_correlated_division=use_correlated_division_i)
+                                                   assume_correlated=assume_correlated_i)
         local_kwargs = dict(kwargs)
         if styles is not None:
             local_kwargs.update(styles[i])
