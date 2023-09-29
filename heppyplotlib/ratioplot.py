@@ -112,7 +112,7 @@ def ratioplot_setup_axes(subplot_specs):
             #if not j == 0:
             #    kwargs["sharey"] = axes_column_list[0][i]
             axes_list.append(plt.subplot(subplot_specs[i*ncols + j], **kwargs))
-        layout_main_and_diff_axes(axes_list[0], axes_list[1:])
+        layout_axes_column(axes_list)
         axes_column_list.append(axes_list)
     return axes_column_list
 
