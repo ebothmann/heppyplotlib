@@ -18,7 +18,7 @@ def use_tex(use_serif=True, overwrite=True, preamble=None):
                         r'\usepackage{siunitx}',
                         r'\usepackage{hepnames}']
         else:
-            # note that we do note even have a capital delta character (\Delta) apparently ...
+            # note that we do not even have a capital delta character (\Delta) apparently ...
             # TODO: use a more complete sans serif font
             preamble = [r'\usepackage{amsmath}',
                         r'\renewcommand*\familydefault{\sfdefault}',
