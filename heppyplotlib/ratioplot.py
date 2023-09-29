@@ -46,6 +46,7 @@ def ratioplot(files_or_data_objects, rivet_path,
         axes_column_list = ratioplot_setup_axes(grid)
     else:
         grid = None
+        axes_column_list = [axes_list]
 
     for i, axes_list in enumerate(axes_column_list):
 
