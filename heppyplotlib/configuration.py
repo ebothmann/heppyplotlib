@@ -27,7 +27,7 @@ def use_tex(use_serif=True, overwrite=True, preamble=None):
                         r'\sisetup{number-mode=text}',  # force siunitx to actually use your fonts
                         r'\usepackage{sansmath}',       # load up the sansmath for sans-serif math
                         r'\sansmath']                   # enable sansmath
-    plt.rcParams['text.latex.preamble'] = preamble
+    plt.rcParams['text.latex.preamble'] = " ".join(preamble)
     plt.rc('text', usetex=True)
 
 
