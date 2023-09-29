@@ -101,7 +101,7 @@ def are_points_with_errors_adjacent(points, errs):
 def are_bins_adjacent(lefts, widths):
     """Returns whether a given set of bins are adjacent."""
     for left, width, next_left in zip(lefts[:-1], widths[:-1], lefts[1:]):
-        if not left + width == next_left:
+        if abs((left + width - next_left)/next_left) > 1e-4:
             return False
     return True
 
