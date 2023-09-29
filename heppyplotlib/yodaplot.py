@@ -31,17 +31,17 @@ def get_y_coords(yoda_data_object):
 
 def plot_scatter2d(scatter, errors_enabled=True, visible=True, **kwargs):
     """Plots a YODA Scatter2D object."""
-    x_coords = [point.x for point in scatter.points]
+    x_coords = [point.x() for point in scatter.points()]
     y_coords = get_scatter2d_y_coords(scatter)
     if visible:
         x_errs = []
-        x_errs.append([point.xErrs[0] for point in scatter.points])
-        x_errs.append([point.xErrs[1] for point in scatter.points])
+        x_errs.append([point.xErrs()[0] for point in scatter.points()])
+        x_errs.append([point.xErrs()[1] for point in scatter.points()])
         bins_are_adjacent = are_points_with_errors_adjacent(x_coords, x_errs)
         if errors_enabled:
             y_errs = []
-            y_errs.append([point.yErrs[0] for point in scatter.points])
-            y_errs.append([point.yErrs[1] for point in scatter.points])
+            y_errs.append([point.yErrs()[0] for point in scatter.points()])
+            y_errs.append([point.yErrs()[1] for point in scatter.points()])
         else:
             y_errs = None
     else:
@@ -57,19 +57,19 @@ def plot_scatter2d(scatter, errors_enabled=True, visible=True, **kwargs):
 
 def get_scatter2d_y_coords(scatter):
     """Return y coordinates for a Scatter2D object."""
-    return [point.y for point in scatter.points]
+    return [point.y() for point in scatter.points()]
 
 def plot_histo1d(histo, errors_enabled=True, visible=True, **kwargs):
     """Plots a YODA Histo1D object."""
-    return plot_histo1d_bins(histo.bins, errors_enabled, visible, **kwargs)
+    return plot_histo1d_bins(histo.bins(), errors_enabled, visible, **kwargs)
 
 def plot_histo1d_bins(bins, errors_enabled=True, visible=True, **kwargs):
     """Plots YODA Histo 1D bins."""
-    x_lefts = [histo_bin.xEdges[0] for histo_bin in bins]
-    widths = [histo_bin.xEdges[1] - histo_bin.xEdges[0] for histo_bin in bins]
+    x_lefts = [histo_bin.xEdges()[0] for histo_bin in bins]
+    widths = [histo_bin.xEdges()[1] - histo_bin.xEdges()[0] for histo_bin in bins]
     bins_are_adjacent = are_bins_adjacent(x_lefts, widths)
     y_coord = get_histo1d_y_coords(bins)
-    y_errs = [histo_bin.heightErr for histo_bin in bins]
+    y_errs = [histo_bin.heightErr() for histo_bin in bins]
     if not bins_are_adjacent:
         result = plt.bar(x_lefts, y_coord, width=widths, yerr=y_errs, visible=visible, **kwargs)
     else:
@@ -80,10 +80,10 @@ def plot_histo1d_bins(bins, errors_enabled=True, visible=True, **kwargs):
 def get_histo1d_y_coords(histo_or_bins):
     """Return y coordinates for a Histo1D object."""
     if isinstance(histo_or_bins, yoda.Histo1D):
-        bins = histo_or_bins.bins
+        bins = histo_or_bins.bins()
     else:
         bins = histo_or_bins
-    return [histo_bin.height for histo_bin in bins]
+    return [histo_bin.height() for histo_bin in bins]
 
 def are_points_with_errors_adjacent(points, errs):
     """Returns whether a given set of points are adjacent when taking their errors into account."""
@@ -218,31 +218,31 @@ def resolve_data_object(filename_or_data_object, name,
             data_object.rebin(rebin_count, begin=rebin_begin)
         else:
             print("WARNING: Will assume statistical errors for rebinning a scatter plot")
-            x_coords = [point.x for point in data_object.points]
+            x_coords = [point.x() for point in data_object.points()]
             y_coords = get_scatter2d_y_coords(data_object)
             x_errs = []
-            x_errs.append([point.xErrs[0] for point in data_object.points])
-            x_errs.append([point.xErrs[1] for point in data_object.points])
+            x_errs.append([point.xErrs()[0] for point in data_object.points()])
+            x_errs.append([point.xErrs()[1] for point in data_object.points()])
             if not are_points_with_errors_adjacent(x_coords, x_errs):
                 raise Exception("Points must be adjacent for interpreting the scatter plots as a histogram")
-            new_points = data_object.points[0:rebin_begin]
+            new_points = data_object.points()[0:rebin_begin]
             i = 0
-            while rebin_begin + i * rebin_count < len(data_object.points) - 1:
+            while rebin_begin + i * rebin_count < len(data_object.points()) - 1:
                 first_index = rebin_begin + i * rebin_count
-                last_index = min(first_index + rebin_count, len(data_object.points))
-                points = data_object.points[first_index:last_index]
-                left_edge = points[0].x - points[0].xErrs[0]
-                right_edge = points[-1].x + points[-1].xErrs[1]
+                last_index = min(first_index + rebin_count, len(data_object.points()))
+                points = data_object.points()[first_index:last_index]
+                left_edge = points[0].x() - points[0].xErrs()[0]
+                right_edge = points[-1].x() + points[-1].xErrs()[1]
                 length = right_edge - left_edge
                 new_x = left_edge + length / 2.0
                 new_xerrs = length / 2.0
                 new_y = 0.0
                 new_yerrs = np.array([0.0, 0.0])
                 for point in points:
-                    left_edge = point.x - point.xErrs[0]
-                    right_edge = point.x + point.xErrs[1]
-                    new_y += (right_edge - left_edge) * point.y
-                    new_yerrs += ((right_edge - left_edge) * np.array(point.yErrs))**2
+                    left_edge = point.x() - point.xErrs()[0]
+                    right_edge = point.x() + point.xErrs()[1]
+                    new_y += (right_edge - left_edge) * point.y()
+                    new_yerrs += ((right_edge - left_edge) * np.array(point.yErrs()))**2
                 new_y /= length
                 new_yerrs = np.sqrt(new_yerrs) / length
                 new_points.append(yoda.Point2D(x=new_x, y=new_y, xerrs=new_xerrs, yerrs=new_yerrs))
@@ -253,40 +253,40 @@ def resolve_data_object(filename_or_data_object, name,
     if subtract_by is not None:
         data_object = yoda.mkScatter(data_object)
         operand = resolve_data_object(subtract_by, name).mkScatter()
-        for point, operand_point in zip(data_object.points, operand.points):
-            new_y = point.y - operand_point.y
+        for point, operand_point in zip(data_object.points(), operand.points()):
+            new_y = point.y() - operand_point.y()
             if assume_correlated:
-                new_y_errs = [y_err - operand_point.y for y_err in point.yErrs]
+                new_y_errs = [y_err - operand_point.y() for y_err in point.yErrs()]
             if not assume_correlated:
                 # assume that we subtract an independent data set, use error propagation
                 new_y_errs = []
-                for y_err, operand_y_err in zip(point.yErrs, operand_point.yErrs):
+                for y_err, operand_y_err in zip(point.yErrs(), operand_point.yErrs()):
                     err2 = 0.0
-                    if point.y != 0.0:
+                    if point.y() != 0.0:
                         err2 += (y_err)**2
                     err2 += (operand_y_err)**2
                     new_y_errs.append(np.sqrt(err2))
-            point.y = new_y
-            point.yErrs = new_y_errs
+            point.setY(new_y)
+            point.setYErrs(new_y_errs)
     if divide_by is not None or multiply_by is not None:
         data_object = yoda.mkScatter(data_object)
         if isinstance(divide_by, float) or isinstance(multiply_by, float):
-            for point in data_object.points:
+            for point in data_object.points():
                 if divide_by is not None:
-                    new_y = point.y / divide_by
-                    new_y_errs = [y_err / divide_by for y_err in point.yErrs]
+                    new_y = point.y() / divide_by
+                    new_y_errs = [y_err / divide_by for y_err in point.yErrs()]
                 else:
-                    new_y = point.y * multiply_by
-                    new_y_errs = [y_err * multiply_by for y_err in point.yErrs]
-                point.y = new_y
-                point.yErrs = new_y_errs
+                    new_y = point.y() * multiply_by
+                    new_y_errs = [y_err * multiply_by for y_err in point.yErrs()]
+                point.setY(new_y)
+                point.setYErrs(new_y_errs)
         else:
             if divide_by is not None:
                 operand = resolve_data_object(divide_by, name).mkScatter()
             else:
                 operand = resolve_data_object(multiply_by, name).mkScatter()
-            for point, operand_point in zip(data_object.points, operand.points):
-                if operand_point.y == 0.0:
+            for point, operand_point in zip(data_object.points(), operand.points()):
+                if operand_point.y() == 0.0:
                     if divide_by is not None:
                         new_y = 1.0
                     else:
@@ -294,23 +294,23 @@ def resolve_data_object(filename_or_data_object, name,
                     new_y_errs = [0.0, 0.0]
                 else:
                     if divide_by is not None:
-                        new_y = point.y / operand_point.y
+                        new_y = point.y() / operand_point.y()
                         if assume_correlated:
-                            new_y_errs = [y_err / operand_point.y for y_err in point.yErrs]
+                            new_y_errs = [y_err / operand_point.y() for y_err in point.yErrs()]
                     else:
-                        new_y = point.y * operand_point.y
+                        new_y = point.y() * operand_point.y()
                         if assume_correlated:
-                            new_y_errs = [y_err * operand_point.y for y_err in point.yErrs]
+                            new_y_errs = [y_err * operand_point.y() for y_err in point.yErrs()]
                     if not assume_correlated:
                         # assume that we divide/multiply through an independent data set, use error propagation
                         rel_y_errs = []
-                        for y_err, operand_y_err in zip(point.yErrs, operand_point.yErrs):
+                        for y_err, operand_y_err in zip(point.yErrs(), operand_point.yErrs()):
                             err2 = 0.0
-                            if point.y != 0.0:
-                                err2 += (y_err / point.y)**2
-                            err2 += (operand_y_err / operand_point.y)**2
+                            if point.y() != 0.0:
+                                err2 += (y_err / point.y())**2
+                            err2 += (operand_y_err / operand_point.y())**2
                             rel_y_errs.append(np.sqrt(err2))
                         new_y_errs = [rel_y_err * new_y for rel_y_err in rel_y_errs]
-                point.y = new_y
-                point.yErrs = new_y_errs
+                point.setY(new_y)
+                point.setYErrs(new_y_errs)
     return data_object
