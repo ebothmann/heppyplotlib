@@ -31,7 +31,7 @@ def use_tex(use_serif=True, overwrite=True, preamble=None):
     plt.rc('text', usetex=True)
 
 
-def set_font_sizes(normal=9, small=8):
+def set_font_sizes(normal=9, small=8, large=10):
     r"""Configure pyplot to use these two font sizes.
 
     Match LaTeX paper font sizes using:
@@ -45,7 +45,7 @@ def set_font_sizes(normal=9, small=8):
     e.g. extract the font sizes for captions and subcaptions (as in the example)
     """
     params = {'font.size': normal,        # \thefontsize\small (like captions)
-              'figure.titlesize': normal,
+              'figure.titlesize': large,
               'axes.titlesize': normal,
               'axes.labelsize': normal,
               'legend.fontsize': small,
