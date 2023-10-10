@@ -44,6 +44,18 @@ def plot_scatter2d(scatter, errors_enabled=True, visible=True, **kwargs):
             y_errs.append([point.yErrs()[1] for point in scatter.points()])
         else:
             y_errs = None
+        if "xmin" in kwargs:
+            for i, x in enumerate(x_coords):
+                if x >= kwargs["xmin"]:
+                    break
+            x_coords = x_coords[i:]
+            y_coords = y_coords[i:]
+            x_errs[0] = x_errs[0][i:]
+            x_errs[1] = x_errs[1][i:]
+            if y_errs is not None:
+                y_errs[0] = y_errs[0][i:]
+                y_errs[1] = y_errs[1][i:]
+            del kwargs["xmin"]
     else:
         bins_are_adjacent = False
         x_errs = None
@@ -70,6 +82,15 @@ def plot_histo1d_bins(bins, errors_enabled=True, visible=True, **kwargs):
     bins_are_adjacent = are_bins_adjacent(x_lefts, widths)
     y_coord = get_histo1d_y_coords(bins)
     y_errs = [histo_bin.heightErr() for histo_bin in bins]
+    if "xmin" in kwargs:
+        for i, x_left in enumerate(x_lefts):
+            if x_left >= kwargs["xmin"]:
+                break
+        x_lefts = x_lefts[i:]
+        widths = widths[i:]
+        y_coord = y_coord[i:]
+        y_errs = y_errs[i:]
+        del kwargs["xmin"]
     if not bins_are_adjacent:
         result = plt.bar(x_lefts, y_coord, width=widths, yerr=y_errs, visible=visible, **kwargs)
     else:
